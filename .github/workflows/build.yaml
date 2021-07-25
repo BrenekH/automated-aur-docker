@@ -1,0 +1,13 @@
+name: Build and Publish Docker Images
+
+on:
+  # schedule:
+  #   cron: '1 1 1 1 1'
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "Hello, World!"
