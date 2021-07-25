@@ -1,4 +1,4 @@
-FROM archlinux:base-devel
+FROM archlinux/archlinux:base-devel
 
 COPY buildpkg.py entrypoint.sh /
 
