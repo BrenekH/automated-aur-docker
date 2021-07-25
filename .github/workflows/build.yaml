@@ -3,7 +3,7 @@ name: Build and Push Docker Images
 on:
   # schedule:
   #   cron: '1 1 1 1 1'
-  push: master
+  push: [master]
 
 jobs:
   build-and-push:
