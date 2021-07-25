@@ -16,6 +16,8 @@ jobs:
         subfolder: ['build-package', 'publish-package', 'update-package-via-manifest']
 
     steps:
+      - uses: actions/checkout@v2
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
