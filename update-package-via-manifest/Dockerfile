@@ -1,6 +1,16 @@
+FROM node:latest AS builder
+
+WORKDIR /src/update-package-via-manifest
+
+COPY . .
+
+RUN npm i && npm run compile
+
 FROM archlinux/archlinux:base-devel
 
-COPY lib/index.js entrypoint.sh /
+COPY --from=builder /src/update-package-via-manifest/lib/index.js /index.js
+
+COPY entrypoint.sh /
 
 RUN pacman -Syu --noconfirm &&\
  pacman -S --noconfirm --needed sudo nodejs git pacman-contrib &&\
