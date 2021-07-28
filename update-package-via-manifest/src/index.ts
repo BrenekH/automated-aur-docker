@@ -44,6 +44,11 @@ try {
 			continue
 		}
 
+		// Check current branches for latestVersion
+		if (hasVersionAlreadyBeenPushed(manifest.name, latestVersion)) {
+			continue
+		}
+
 		// Change permissions so that everything "should be" writable
 		execSync("sudo chown -R builder:builder $(pwd)", {stdio: 'inherit'})
 
@@ -141,4 +146,17 @@ interface IManifest {
 		type: string,
 		repo: string,
 	}
+}
+
+function hasVersionAlreadyBeenPushed(packageName: string, version: string): boolean {
+	const remoteBranches: string =  execSync("git branch -r").toString()
+
+	for (const branch of remoteBranches.split("\n")) {
+		if (branch.indexOf(`${packageName}/${version}`) === -1) {
+			continue
+		}
+		return true
+	}
+
+	return false
 }
