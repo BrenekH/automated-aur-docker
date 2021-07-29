@@ -149,7 +149,7 @@ interface IManifest {
 }
 
 function hasVersionAlreadyBeenPushed(packageName: string, version: string): boolean {
-	const remoteBranches: string =  execSync("git branch -r").toString()
+	const remoteBranches: string =  execSync("git ls-remote --heads origin").toString()
 
 	for (const branch of remoteBranches.split("\n")) {
 		if (branch.indexOf(`${packageName}/${version}`) === -1) {
