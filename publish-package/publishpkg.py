@@ -70,8 +70,8 @@ def gen_commit_msg(cwd) -> List[str]:
 				with (Path(cwd) / "PKGBUILD").open("r") as f:
 					pkgbuild_contents = f.read()
 
-				pkgver = re.search(r"pkgver=(.*)", pkgbuild_contents).group()
-				pkgrel = re.search(r"pkgrel=(.*)", pkgbuild_contents).group()
+				pkgver = re.search(r"pkgver=(.*)", pkgbuild_contents).group().replace("pkgver=", "") # Even though I'm using capturing groups,
+				pkgrel = re.search(r"pkgrel=(.*)", pkgbuild_contents).group().replace("pkgrel=", "") # I still need to replace the extra stuff in each line
 
 				return ["-m", f"Update to {pkgver}-{pkgrel}"]
 		except subprocess.CalledProcessError:
