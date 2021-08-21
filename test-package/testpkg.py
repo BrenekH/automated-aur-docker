@@ -24,7 +24,7 @@ def test(pkg_dir_str: str) -> Tuple[str, bool]:
 			print("[INFO] Running user-defined testCmd")
 			testCmd_proc = subprocess.run(testCmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 		else:
-			print("[ERROR] testCmd must be an array or null")
+			print("[ERROR] testCmd must be a string or null")
 			sys.exit(1)
 
 	check_results = "testCmd is null"
