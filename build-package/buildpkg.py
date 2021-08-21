@@ -33,7 +33,7 @@ def build(pkg_dir_str: str) -> bool:
 		pkg_namcap_proc = subprocess.run(["namcap", "-i", built_pkg_file], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
 		print("[INFO] Copying built package to GITHUB_WORKSPACE")
-		shutil.copy(built_pkg_file, Path(os.getenv("GITHUB_WORKSPACE")) / "package.pkg.tar.zst")
+		os.system(f"sudo cp {built_pkg_file} {Path(os.getenv('GITHUB_WORKSPACE')) / 'package.pkg.tar.zst'}")
 
 	check_results = ""
 	if makepkg_proc.returncode != 0:
