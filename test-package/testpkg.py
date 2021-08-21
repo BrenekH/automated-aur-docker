@@ -20,7 +20,7 @@ def test(pkg_dir_str: str) -> Tuple[str, bool]:
 	# Run manifest.testCmd.
 	testCmd = None
 	if (testCmd := manifest["testCmd"]) != None:
-		if type(testCmd) == type([]):
+		if type(testCmd) == type(""):
 			print("[INFO] Running user-defined testCmd")
 			testCmd_proc = subprocess.run(testCmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 		else:
