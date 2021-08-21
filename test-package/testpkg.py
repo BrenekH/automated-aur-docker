@@ -1,16 +1,16 @@
 #!/bin/env python3
 import json, tempfile, shutil, subprocess, sys
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
-def test(pkg_dir_str: str) -> bool:
+def test(pkg_dir_str: str) -> Tuple[str, bool]:
 	"""test reads the .aurmanifest.json, and runs the test command
 
 	Args:
 		pkg_dir_str (str): The directory to read the .aurmanifest.json from
 
 	Returns:
-		bool: Whether or not the test command was successful
+		Tuple[str, bool]: The results of the command as a string and a boolean that represents the failure state (True = failed, False = successful)
 	"""
 	pkg_dir = Path(pkg_dir_str)
 
@@ -27,11 +27,11 @@ def test(pkg_dir_str: str) -> bool:
 			print("[ERROR] testCmd must be an array or null")
 			sys.exit(1)
 
-	check_results = ""
-	if testCmd != None and testCmd_proc.returncode != 0:
-		check_results += f"testCmd:\nStdout:\n{testCmd_proc.stdout}\nStderr:\n{testCmd_proc.stderr}\n"
+	check_results = "testCmd is null"
+	if testCmd != None:
+		check_results = f"testCmd:\nStdout:\n{testCmd_proc.stdout}\nStderr:\n{testCmd_proc.stderr}\n"
 
-	return check_results
+	return check_results, testCmd_proc.returncode != 0 if testCmd != None else False
 
 def copy_files_to_dir(files: List[Path], dir: Path):
 	for f in files:
@@ -41,10 +41,11 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 		shutil.copy(f, dir / f.name)
 
 if __name__ == "__main__":
-	output = test(sys.argv[1])
+	results_out, failed = test(sys.argv[1])
 
 	if "--normal" in sys.argv:
-		print(output)
+		print(f"{results_out}\n\nFailed: {failed}")
 	else:
-		output = output.replace("\n", "\\n").replace('"', '\\"')
-		print(f"::set-output name=result::{output}")
+		results_out = results_out.replace("\n", "\\n").replace('"', '\\"')
+		print(f"::set-output name=result::{results_out}")
+		print(f"::set-output name=failed::{'true' if failed else 'false'}")
