@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        subfolder: ['build-package', 'publish-package', 'update-package-via-manifest']
+        subfolder: ['build-package', 'test-package', 'publish-package', 'update-package-via-manifest']
 
     steps:
       - uses: actions/checkout@v2
