@@ -1,5 +1,5 @@
 #!/bin/env python3
-import json, tempfile, shutil, subprocess, sys
+import json, os, tempfile, shutil, subprocess, sys
 from pathlib import Path
 from typing import List
 
@@ -32,18 +32,8 @@ def build(pkg_dir_str: str) -> bool:
 		print("[INFO] Running namcap against generated package")
 		pkg_namcap_proc = subprocess.run(["namcap", "-i", built_pkg_file], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
-		print("[INFO] Installing built package")
-		pacman_U_proc = subprocess.run(["sudo", "pacman", "-U", "--noconfirm", built_pkg_file], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-
-	# Run manifest.testCmd.
-	testCmd = None
-	if (testCmd := manifest["testCmd"]) != None:
-		if type(testCmd) == type([]):
-			print("[INFO] Running user-defined testCmd")
-			testCmd_proc = subprocess.run(testCmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-		else:
-			print("[ERROR] testCmd must be an array or null")
-			sys.exit(1)
+		print("[INFO] Copying built package to GITHUB_WORKSPACE")
+		shutil.copy(built_pkg_file, Path(os.getenv("GITHUB_WORKSPACE")) / "package.pkg.tar.zst")
 
 	check_results = ""
 	if makepkg_proc.returncode != 0:
@@ -51,12 +41,6 @@ def build(pkg_dir_str: str) -> bool:
 
 	check_results += f"namcap PKGBUILD:\nStdout:\n{pkgbuild_namcap_proc.stdout}\nStderr:\n{pkgbuild_namcap_proc.stdout}\n"
 	check_results += f"namcap *.pkg.tar.zst:\nStdout\n{pkg_namcap_proc.stdout}\nStderr:\n{pkgbuild_namcap_proc.stderr}\n"
-
-	if pacman_U_proc.returncode != 0:
-		check_results += f"pacman -U:\nStdout:\n{pacman_U_proc.stdout}\nStderr:\n{pacman_U_proc.stderr}\n"
-
-	if testCmd != None and testCmd_proc.returncode != 0:
-		check_results += f"testCmd:\nStdout:\n{testCmd_proc.stdout}\nStderr:\n{testCmd_proc.stderr}\n"
 
 	return check_results
 
