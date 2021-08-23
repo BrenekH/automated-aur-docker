@@ -49,3 +49,5 @@ if __name__ == "__main__":
 		results_out = results_out.replace("\n", "\\n").replace('"', '\\"')
 		print(f"::set-output name=result::{results_out}")
 		print(f"::set-output name=failed::{'true' if failed else 'false'}")
+		if failed:
+			sys.exit(1)

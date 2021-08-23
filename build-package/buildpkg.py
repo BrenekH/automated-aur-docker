@@ -1,9 +1,17 @@
 #!/bin/env python3
 import json, os, tempfile, shutil, subprocess, sys
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
-def build(pkg_dir_str: str) -> bool:
+def build(pkg_dir_str: str) -> Tuple[str, bool]:
+	"""build builds a package and runs namcap against the PKGBUILD and the resulting .pkg.tar.zst
+
+	Args:
+		pkg_dir_str (str): The directory to read the .aurmanifest.json from
+
+	Returns:
+		Tuple[str, bool]: The results of the command as a string and a boolean that represents the failure state (True = failed, False = successful)
+	"""
 	pkg_dir = Path(pkg_dir_str)
 
 	with (pkg_dir / ".aurmanifest.json").open("r") as f:
@@ -24,7 +32,7 @@ def build(pkg_dir_str: str) -> bool:
 			check_results += f"namcap PKGBUILD:\nStdout:\n{pkgbuild_namcap_proc.stdout}\nStderr:\n{pkgbuild_namcap_proc.stdout}\n"
 			check_results += f"Skipping remaining checks: makepkg returned a non-zero exit code {makepkg_proc.returncode}"
 			print(f"Skipping remaining checks: makepkg returned a non-zero exit code {makepkg_proc.returncode}")
-			return check_results
+			return check_results, True
 
 		# Find the built package
 		built_pkg_file = str(list(Path(td).glob("*.pkg.tar.zst"))[0])
@@ -42,7 +50,7 @@ def build(pkg_dir_str: str) -> bool:
 	check_results += f"namcap PKGBUILD:\nStdout:\n{pkgbuild_namcap_proc.stdout}\nStderr:\n{pkgbuild_namcap_proc.stdout}\n"
 	check_results += f"namcap *.pkg.tar.zst:\nStdout\n{pkg_namcap_proc.stdout}\nStderr:\n{pkgbuild_namcap_proc.stderr}\n"
 
-	return check_results
+	return check_results, makepkg_proc.returncode != 0 or pkgbuild_namcap_proc.returncode != 0 or pkg_namcap_proc.returncode != 0
 
 def copy_files_to_dir(files: List[Path], dir: Path):
 	for f in files:
@@ -52,10 +60,14 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 		shutil.copy(f, dir / f.name)
 
 if __name__ == "__main__":
-	output = build(sys.argv[1])
+	output, failed = build(sys.argv[1])
 
 	if "--normal" in sys.argv:
-		print(output)
+		print(output, f"Failed: {failed}")
 	else:
 		output = output.replace("\n", "\\n").replace('"', '\\"')
 		print(f"::set-output name=result::{output}")
+		print(f"::set-output name=failed::{failed}")
+
+		if failed:
+			sys.exit(1)
