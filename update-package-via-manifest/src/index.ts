@@ -50,11 +50,11 @@ try {
 		}
 
 		// Change permissions so that everything "should be" writable
-		execSync("sudo chown -R builder:builder $(pwd)", {stdio: 'inherit'})
+		execSync("sudo chown -R builder:builder $(pwd)", { stdio: 'inherit' })
 
 		// Create new branch
 		const branchName = `bot/${manifest.name}/${latestVersion}`
-		execSync(`git checkout -b ${branchName}`, {stdio: 'inherit'})
+		execSync(`git checkout -b ${branchName}`, { stdio: 'inherit' })
 
 		let pkgbuildContents: string = fs.readFileSync(pkgbuildPath).toString()
 
@@ -71,7 +71,7 @@ try {
 		})
 
 		// git add and commit updated PKGBUILD
-		execSync(`git add ${pkgbuildPath}`, {stdio: 'inherit'})
+		execSync(`git add ${pkgbuildPath}`, { stdio: 'inherit' })
 		execSync(`git commit -m "Update ${manifest.name} to ${latestVersion}"`, {
 			stdio: "inherit",
 			env: {
@@ -84,7 +84,7 @@ try {
 		})
 
 		// Push changes to GitHub
-		execSync(`git push origin ${branchName}`, {stdio: 'inherit'})
+		execSync(`git push origin ${branchName}`, { stdio: 'inherit' })
 
 		// Create a pull request with the changes
 		const octokit = github.getOctokit(core.getInput("github-token"))
@@ -97,10 +97,10 @@ try {
 		})
 
 		// Switch back to master branch
-		execSync(`git checkout master`, {stdio: 'inherit'})
+		execSync(`git checkout master`, { stdio: 'inherit' })
 	}
 
-} catch (error) {
+} catch (error: any) {
 	core.setFailed(error)
 }
 
@@ -149,7 +149,7 @@ interface IManifest {
 }
 
 function hasVersionAlreadyBeenPushed(packageName: string, version: string): boolean {
-	const remoteBranches: string =  execSync("git ls-remote --heads origin").toString()
+	const remoteBranches: string = execSync("git ls-remote --heads origin").toString()
 
 	for (const branch of remoteBranches.split("\n")) {
 		if (branch.indexOf(`${packageName}/${version}`) === -1) {
