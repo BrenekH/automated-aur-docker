@@ -10,8 +10,7 @@ FROM archlinux/archlinux:base-devel
 
 COPY entrypoint.sh /
 
-RUN pacman -Syu --noconfirm &&\
-	pacman -S --noconfirm --needed sudo nodejs git pacman-contrib &&\
+RUN pacman -Syu --noconfirm --needed sudo nodejs git pacman-contrib &&\
 	useradd builder -m &&\
 	passwd -d builder &&\
 	printf 'builder ALL=(ALL) ALL\n' | tee -a /etc/sudoers &&\
