@@ -2,10 +2,13 @@ name: Build and Push Docker Images
 
 on:
   schedule:
-    - cron: '45 1 * * *'
+    - cron: "45 1 * * *"
   push:
     branches:
       - master
+    paths-ignore:
+      - ".github/**"
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -13,7 +16,11 @@ jobs:
 
     strategy:
       matrix:
-        subfolder: ['build-package', 'test-package', 'publish-package', 'update-package-via-manifest']
+        subfolder:
+          - "build-package"
+          - "test-package"
+          - "publish-package"
+          - "update-package-via-manifest"
 
     steps:
       - uses: actions/checkout@v2
