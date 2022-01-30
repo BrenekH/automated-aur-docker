@@ -1,0 +1,39 @@
+name: Cleanup old images
+
+on:
+  schedule:
+    - cron: "45 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Remove untagged images for ghcr.io/brenekh/${{ matrix.package-name }}
+    runs-on: "ubuntu-latest"
+
+    strategy:
+      matrix:
+        package-name:
+          - "auto-aur-update-package-via-manifest"
+          - "auto-aur-build-package"
+          - "auto-aur-publish-package"
+          - "auto-aur-test-package"
+
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
+          script: |
+            const response = await github.request("GET /${{ env.OWNER }}/packages/container/${{ env.PACKAGE_NAME }}/versions",
+              { per_page: ${{ env.PER_PAGE }}
+            });
+            for(version of response.data) {
+                if (version.metadata.container.tags.length == 0) {
+                    console.log("delete " + version.id)
+                    const deleteResponse = await github.request("DELETE /${{ env.OWNER }}/packages/container/${{ env.PACKAGE_NAME }}/versions/" + version.id, { });
+                    console.log("status " + deleteResponse.status)
+                }
+            }
+        env:
+          OWNER: user
+          PACKAGE_NAME: ${{ matrix.package-name }}
+          PER_PAGE: 100
