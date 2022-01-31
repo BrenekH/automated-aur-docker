@@ -126,10 +126,16 @@ async function getLatestVersionFromGithub(repo: string): Promise<string | undefi
 
 	const octokit = github.getOctokit(core.getInput("github-token"))
 
-	const resp = await octokit.rest.repos.getLatestRelease({
-		owner: owner,
-		repo: repoName,
-	})
+	let resp;
+	try {
+		resp = await octokit.rest.repos.getLatestRelease({
+			owner: owner,
+			repo: repoName,
+		})
+	} catch (e: any) {
+		core.warning(e)
+		return undefined
+	}
 
 	if (resp.status !== 200) {
 		return undefined
