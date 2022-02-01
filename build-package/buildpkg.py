@@ -28,8 +28,8 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 		pkgbuild_namcap_proc = subprocess.run(["namcap", "-i", "PKGBUILD"], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
 		if makepkg_proc.returncode != 0:
-			check_results = f"makepkg:\nStdout:\n{makepkg_proc.stdout}\nStderr:\n{makepkg_proc.stderr}\n"
-			check_results += f"namcap PKGBUILD:\nStdout:\n{pkgbuild_namcap_proc.stdout}\nStderr:\n{pkgbuild_namcap_proc.stdout}\n"
+			check_results = f"## makepkg:\n### Stdout:\n```\n{makepkg_proc.stdout}\n```\n### Stderr:\n```\n{makepkg_proc.stderr}\n```\n"
+			check_results += f"## namcap PKGBUILD:\n### Stdout:\n{pkgbuild_namcap_proc.stdout}\n### Stderr:\n```\n{pkgbuild_namcap_proc.stdout}\n```\n"
 			check_results += f"Skipping remaining checks: makepkg returned a non-zero exit code {makepkg_proc.returncode}"
 			print(f"Skipping remaining checks: makepkg returned a non-zero exit code {makepkg_proc.returncode}")
 			return check_results, True
@@ -45,10 +45,10 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 
 	check_results = ""
 	if makepkg_proc.returncode != 0:
-		check_results += f"makepkg:\nStdout:\n{makepkg_proc.stdout}\nStderr:\n{makepkg_proc.stderr}\n"
+		check_results += f"## makepkg:\n### Stdout:\n```\n{makepkg_proc.stdout}\n```\n### Stderr:\n```\n{makepkg_proc.stderr}\n```\n"
 
-	check_results += f"namcap PKGBUILD:\nStdout:\n{pkgbuild_namcap_proc.stdout}\nStderr:\n{pkgbuild_namcap_proc.stdout}\n"
-	check_results += f"namcap *.pkg.tar.zst:\nStdout\n{pkg_namcap_proc.stdout}\nStderr:\n{pkgbuild_namcap_proc.stderr}\n"
+	check_results += f"## namcap PKGBUILD:\n### Stdout:\n```\n{pkgbuild_namcap_proc.stdout}\n```\n### Stderr:\n```\n{pkgbuild_namcap_proc.stdout}\n```\n"
+	check_results += f"## namcap *.pkg.tar.zst:\n### Stdout\n```\n{pkg_namcap_proc.stdout}\n```\n### Stderr:\n```\n{pkgbuild_namcap_proc.stderr}\n```\n"
 
 	return check_results, makepkg_proc.returncode != 0 or pkgbuild_namcap_proc.returncode != 0 or pkg_namcap_proc.returncode != 0
 
