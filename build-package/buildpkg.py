@@ -49,7 +49,7 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 		check_results += create_results_text("makepkg", [("Stdout", makepkg_proc.stdout), ("Stderr", makepkg_proc.stderr)])
 
 	check_results += create_results_text("namcap PKGBUILD:", [("Stdout", pkgbuild_namcap_proc.stdout), ("Stderr", pkgbuild_namcap_proc.stderr)])
-	check_results += create_results_text("namcap *.pkg.tar.zst", [("Stdout", pkg_namcap_proc.stdout), "Stderr", pkg_namcap_proc.stderr])
+	check_results += create_results_text("namcap *.pkg.tar.zst", [("Stdout", pkg_namcap_proc.stdout), ("Stderr", pkg_namcap_proc.stderr)])
 
 	return check_results, makepkg_proc.returncode != 0 or pkgbuild_namcap_proc.returncode != 0 or pkg_namcap_proc.returncode != 0
 
