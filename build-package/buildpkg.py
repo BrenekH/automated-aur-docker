@@ -28,9 +28,10 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 		pkgbuild_namcap_proc = subprocess.run(["namcap", "-i", "PKGBUILD"], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
 		if makepkg_proc.returncode != 0:
-			check_results = f"## makepkg:\n### Stdout:\n```\n{makepkg_proc.stdout}\n```\n### Stderr:\n```\n{makepkg_proc.stderr}\n```\n"
-			check_results += f"## namcap PKGBUILD:\n### Stdout:\n{pkgbuild_namcap_proc.stdout}\n### Stderr:\n```\n{pkgbuild_namcap_proc.stdout}\n```\n"
+			check_results = create_results_text("makepkg", [("Stdout", makepkg_proc.stdout), ("Stderr", makepkg_proc.stderr)])
+			check_results += create_results_text("namcap PKGBUILD", [("Stdout", pkgbuild_namcap_proc.stdout), ("Stderr", pkgbuild_namcap_proc.stderr)])
 			check_results += f"Skipping remaining checks: makepkg returned a non-zero exit code {makepkg_proc.returncode}"
+
 			print(f"Skipping remaining checks: makepkg returned a non-zero exit code {makepkg_proc.returncode}")
 			return check_results, True
 
@@ -45,10 +46,10 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 
 	check_results = ""
 	if makepkg_proc.returncode != 0:
-		check_results += f"## makepkg:\n### Stdout:\n```\n{makepkg_proc.stdout}\n```\n### Stderr:\n```\n{makepkg_proc.stderr}\n```\n"
+		check_results += create_results_text("makepkg", [("Stdout", makepkg_proc.stdout), ("Stderr", makepkg_proc.stderr)])
 
-	check_results += f"## namcap PKGBUILD:\n### Stdout:\n```\n{pkgbuild_namcap_proc.stdout}\n```\n### Stderr:\n```\n{pkgbuild_namcap_proc.stdout}\n```\n"
-	check_results += f"## namcap *.pkg.tar.zst:\n### Stdout\n```\n{pkg_namcap_proc.stdout}\n```\n### Stderr:\n```\n{pkgbuild_namcap_proc.stderr}\n```\n"
+	check_results += create_results_text("namcap PKGBUILD:", [("Stdout", pkgbuild_namcap_proc.stdout), ("Stderr", pkgbuild_namcap_proc.stderr)])
+	check_results += create_results_text("namcap *.pkg.tar.zst", [("Stdout", pkg_namcap_proc.stdout), "Stderr", pkg_namcap_proc.stderr])
 
 	return check_results, makepkg_proc.returncode != 0 or pkgbuild_namcap_proc.returncode != 0 or pkg_namcap_proc.returncode != 0
 
@@ -58,6 +59,14 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 			print(f"{f} is an absolute Path. It will not be copied.")
 			continue
 		shutil.copy(f, dir / f.name)
+
+def create_results_text(title: str, pairs: List[Tuple[str, str]]) -> str:
+	pair_str = ""
+
+	for pair in pairs:
+		pair_str += f"### {pair[0]}:\n```\n{pair[1]}\n```\n"
+
+	return f"""## {title}:\n{pair_str}"""
 
 if __name__ == "__main__":
 	output, failed = build(sys.argv[1])
