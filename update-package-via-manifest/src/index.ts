@@ -35,8 +35,13 @@ try {
 				latestVersion = ghVersion.replace(/^v/m, "") // Remove leading v idiom
 				break
 			case "equinox":
-				core.warning("equinox automaticUpdates type is not yet implemented")
-				continue
+				const eqVer = await getLatestVersionFromEquinox(manifest.automaticUpdates.appID)
+				if (eqVer === undefined) {
+					core.warning(`Failed to get latest version from Equinox (${manifestPath}).`)
+					continue
+				}
+				latestVersion = eqVer
+				break
 			default:
 				core.warning(`Unknown automaticUpdates type '${manifest.automaticUpdates}' in ${manifestPath}`)
 				continue
@@ -155,6 +160,15 @@ async function getLatestVersionFromGithub(repo: string): Promise<string | undefi
 	return resp.data.tag_name
 }
 
+async function getLatestVersionFromEquinox(appID: string): Promise<string | undefined> {
+	// TODO: Send request to equinox.io
+
+	// TODO: Parse request for latest version
+
+	// TODO: Return latest version
+	return ""
+}
+
 interface IManifest {
 	name: string,
 	testCmd: string | null,
@@ -162,6 +176,7 @@ interface IManifest {
 	automaticUpdates: {
 		type: string,
 		repo: string,
+		appID: string,
 	}
 }
 
