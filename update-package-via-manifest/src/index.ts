@@ -44,7 +44,7 @@ try {
 				latestVersion = eqVer
 				break
 			default:
-				core.warning(`Unknown automaticUpdates type '${manifest.automaticUpdates}' in ${manifestPath}`)
+				core.warning(`Unknown automaticUpdates type '${manifest.automaticUpdates.type}' in ${manifestPath}`)
 				continue
 		}
 
