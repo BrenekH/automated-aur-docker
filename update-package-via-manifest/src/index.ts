@@ -67,11 +67,19 @@ try {
 
 		fs.writeFileSync(pkgbuildPath, pkgbuildContents)
 
-		// Update checksums in PKGBUILD
-		execSync(`updpkgsums`, {
-			stdio: "inherit",
-			cwd: manifestPath.replace("/.aurmanifest.json", ""),
-		})
+		// Only update the checksums in PKGBUILD when the manifest type supports it.
+		//
+		// For example, GitHub urls will update cleanly with the package version, but
+		// equinox.io uses random strings in their urls that have to be updated manually.
+		// To prevent errors from updpkgsums, we skip the checksum update and rely on
+		// maintainers to do it properly.
+		if (["github"].indexOf(manifest.automaticUpdates.type) !== -1) {
+			// Update checksums in PKGBUILD
+			execSync(`updpkgsums`, {
+				stdio: "inherit",
+				cwd: manifestPath.replace("/.aurmanifest.json", ""),
+			})
+		}
 
 		// git add and commit updated PKGBUILD
 		execSync(`git add ${pkgbuildPath}`, { stdio: 'inherit' })
