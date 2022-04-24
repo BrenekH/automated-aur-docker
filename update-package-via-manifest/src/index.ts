@@ -4,6 +4,7 @@ import { promise as glob } from "glob-promise"
 import * as fs from "fs"
 import * as path from "path"
 import { execSync } from "child_process"
+import axios from "axios"
 
 try {
 	const context = github.context
@@ -34,8 +35,16 @@ try {
 				}
 				latestVersion = ghVersion.replace(/^v/m, "") // Remove leading v idiom
 				break
+			case "equinox":
+				const eqVer = await getLatestVersionFromEquinox(manifest.automaticUpdates.appID)
+				if (eqVer === undefined) {
+					core.warning(`Failed to get latest version from Equinox (${manifestPath}).`)
+					continue
+				}
+				latestVersion = eqVer
+				break
 			default:
-				core.warning(`Unknown automaticUpdates type '${manifest.automaticUpdates}' in ${manifestPath}`)
+				core.warning(`Unknown automaticUpdates type '${manifest.automaticUpdates.type}' in ${manifestPath}`)
 				continue
 		}
 
@@ -64,11 +73,19 @@ try {
 
 		fs.writeFileSync(pkgbuildPath, pkgbuildContents)
 
-		// Update checksums in PKGBUILD
-		execSync(`updpkgsums`, {
-			stdio: "inherit",
-			cwd: manifestPath.replace("/.aurmanifest.json", ""),
-		})
+		// Only update the checksums in PKGBUILD when the manifest type supports it.
+		//
+		// For example, GitHub urls will update cleanly with the package version, but
+		// equinox.io uses random strings in their urls that have to be updated manually.
+		// To prevent errors from updpkgsums, we skip the checksum update and rely on
+		// maintainers to do it properly.
+		if (["github"].indexOf(manifest.automaticUpdates.type) !== -1) {
+			// Update checksums in PKGBUILD
+			execSync(`updpkgsums`, {
+				stdio: "inherit",
+				cwd: manifestPath.replace("/.aurmanifest.json", ""),
+			})
+		}
 
 		// git add and commit updated PKGBUILD
 		execSync(`git add ${pkgbuildPath}`, { stdio: 'inherit' })
@@ -144,6 +161,27 @@ async function getLatestVersionFromGithub(repo: string): Promise<string | undefi
 	return resp.data.tag_name
 }
 
+async function getLatestVersionFromEquinox(appID: string): Promise<string | undefined> {
+	// Send request to equinox.io
+	const result = await axios.post("https://update.equinox.io/check", {
+		"app_id": appID,
+		"channel": "stable",
+		"current_sha256": "",
+		"current_version": "0.0.0",
+		"goarm": "",
+		"os": "linux",
+		"target_version": "",
+		"arch": "amd64"
+	})
+
+	if (result.status !== 200) {
+		core.warning(`Received non-200 status code from update.equinox.io. Status: ${result.statusText}(${result.status}). Data: ${result.data}`)
+		return undefined
+	}
+
+	return result.data.release.version
+}
+
 interface IManifest {
 	name: string,
 	testCmd: string | null,
@@ -151,6 +189,7 @@ interface IManifest {
 	automaticUpdates: {
 		type: string,
 		repo: string,
+		appID: string,
 	}
 }
 
