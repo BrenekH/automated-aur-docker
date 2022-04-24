@@ -34,6 +34,9 @@ try {
 				}
 				latestVersion = ghVersion.replace(/^v/m, "") // Remove leading v idiom
 				break
+			case "equinox":
+				core.warning("equinox automaticUpdates type is not yet implemented")
+				continue
 			default:
 				core.warning(`Unknown automaticUpdates type '${manifest.automaticUpdates}' in ${manifestPath}`)
 				continue
