@@ -4,6 +4,7 @@ import { promise as glob } from "glob-promise"
 import * as fs from "fs"
 import * as path from "path"
 import { execSync } from "child_process"
+import axios from "axios"
 
 try {
 	const context = github.context
@@ -161,12 +162,24 @@ async function getLatestVersionFromGithub(repo: string): Promise<string | undefi
 }
 
 async function getLatestVersionFromEquinox(appID: string): Promise<string | undefined> {
-	// TODO: Send request to equinox.io
+	// Send request to equinox.io
+	const result = await axios.post("https://update.equinox.io/check", {
+		"app_id": appID,
+		"channel": "stable",
+		"current_sha256": "",
+		"current_version": "0.0.0",
+		"goarm": "",
+		"os": "linux",
+		"target_version": "",
+		"arch": "amd64"
+	})
 
-	// TODO: Parse request for latest version
+	if (result.status !== 200) {
+		core.warning(`Received non-200 status code from update.equinox.io. Status: ${result.statusText}(${result.status}). Data: ${result.data}`)
+		return undefined
+	}
 
-	// TODO: Return latest version
-	return ""
+	return result.data.release.version
 }
 
 interface IManifest {
