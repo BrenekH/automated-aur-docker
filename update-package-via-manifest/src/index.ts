@@ -43,6 +43,8 @@ try {
 				}
 				latestVersion = eqVer
 				break
+			case undefined: // Skip if the automaticUpdates field is empty
+				continue
 			default:
 				core.warning(`Unknown automaticUpdates type '${manifest.automaticUpdates.type}' in ${manifestPath}`)
 				continue
