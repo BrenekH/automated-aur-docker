@@ -2,7 +2,10 @@ import * as core from "@actions/core"
 import * as github from "@actions/github"
 import * as path from "path"
 import * as fs from "fs"
+import { execSync } from "child_process"
 import { promise as glob } from "glob-promise"
+
+import * as util from "./util"
 
 interface IManifest {
 	name: string,
@@ -56,17 +59,24 @@ function handleManifest(manifestPath: string, pkgbuildPath: string) {
 		return
 	}
 
-	const pkgbuildVersion: string | undefined = getVersionFromPKGBUILD(manifestPath.replace("/.aurmanifest.json", ""))
+	const pkgbuildVersion: string | undefined = util.getVersionFromPKGBUILD(manifestPath.replace("/.aurmanifest.json", ""))
 	if (pkgbuildVersion === undefined) {
 		core.warning(`Unable to get package version from PKGBUILD (${manifest.name})`)
 		return
 	}
 
-	// TODO: Ask updateProvider what the latest version is
+	const latestVersion = updProv.latestVersion(manifest.automaticUpdates)
 
-	// TODO: Check if PKGBUILD and latest versions are the same
+	core.info(`PKGBUILD: '${pkgbuildVersion}' Latest: '${latestVersion}'`)
 
-	// TODO: Check if a PR has already been opened
+	if (pkgbuildVersion === latestVersion) return
+
+	// Change permissions so that everything "should be" writable and so git won't complain
+	// about an unsafe directory
+	execSync("sudo chown -R builder:builder $(pwd)", { stdio: 'inherit' })
+
+	// Check current branches for latestVersion
+	if (util.hasVersionAlreadyBeenPushed(manifest.name, latestVersion)) return
 
 	// TODO: Ask updateProvider for the update data to act upon
 
@@ -81,17 +91,6 @@ function handleManifest(manifestPath: string, pkgbuildPath: string) {
 	// TODO: Commit and push changes
 
 	// TODO: Open PR with any custom text from updateProvider
-}
-
-function getVersionFromPKGBUILD(dir: string): string | undefined {
-	const fileContents: string = fs.readFileSync(path.join(dir, "PKGBUILD")).toString()
-
-	const matches = /^pkgver=(.*)$/m.exec(fileContents)
-	if (matches === null) {
-		return undefined
-	}
-
-	return matches[1]
 }
 
 try {
