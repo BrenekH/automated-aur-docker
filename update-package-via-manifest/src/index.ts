@@ -55,15 +55,18 @@ try {
 			continue
 		}
 
+		// Mark workspace as a safe directory for git operations
+		// execSync("git config --global --add safe.directory /github/workspace")
+
+		// Change permissions so that everything "should be" writable
+		execSync("sudo chown -R builder:builder $(pwd)", { stdio: 'inherit' })
+
 		core.info(execSync("git remote -v").toString())
 
 		// Check current branches for latestVersion
 		if (hasVersionAlreadyBeenPushed(manifest.name, latestVersion)) {
 			continue
 		}
-
-		// Change permissions so that everything "should be" writable
-		execSync("sudo chown -R builder:builder $(pwd)", { stdio: 'inherit' })
 
 		// Create new branch
 		const branchName = `bot/${manifest.name}/${latestVersion}`
