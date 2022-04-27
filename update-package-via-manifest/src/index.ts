@@ -95,7 +95,13 @@ function handleManifest(manifestPath: string, pkgbuildPath: string) {
 
 	fs.writeFileSync(pkgbuildPath, pkgbuildContents)
 
-	// TODO: Run updpkgsums if requested by updateProvider
+	// Update checksums in PKGBUILD
+	if (updateData.updateChecksums) {
+		execSync(`updpkgsums`, {
+			stdio: "inherit",
+			cwd: manifestPath.replace("/.aurmanifest.json", ""),
+		})
+	}
 
 	// TODO: Commit and push changes
 
