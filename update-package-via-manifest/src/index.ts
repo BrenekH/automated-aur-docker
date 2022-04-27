@@ -55,12 +55,12 @@ try {
 			continue
 		}
 
+		core.info(execSync("git remote -v").toString())
+
 		// Check current branches for latestVersion
 		if (hasVersionAlreadyBeenPushed(manifest.name, latestVersion)) {
 			continue
 		}
-
-		core.info(execSync("git remote get-url origin").toString())
 
 		// Change permissions so that everything "should be" writable
 		execSync("sudo chown -R builder:builder $(pwd)", { stdio: 'inherit' })
