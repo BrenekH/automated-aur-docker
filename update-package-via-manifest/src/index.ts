@@ -12,8 +12,22 @@ interface IManifest {
 		type: string,
 		repo: string,
 		appID: string,
-	}
+	},
 }
+
+interface IUpdateProvider {
+	latestVersion(manifestData: any): string,
+	updateData(manifestData: any): {
+		updateChecksums: boolean,
+		sourceArray?: Array<string>,
+		source_x86_64?: Array<string>,
+		source_i686?: Array<string>,
+		source_aarch64?: Array<string>,
+		source_armv7h?: Array<string>,
+	},
+}
+
+const updateProviders: Map<string, IUpdateProvider> = new Map<string, IUpdateProvider>();
 
 async function main() {
 	// Identify all packages in the pkgs directory
@@ -24,36 +38,49 @@ async function main() {
 
 		core.info(manifestPath)
 
-		const manifest = JSON.parse(fs.readFileSync(manifestPath).toString()) as IManifest
+		handleManifest(manifestPath, pkgbuildPath)
 
-		// TODO: Identify which updateProvider to use
-
-		const pkgbuildVersion: string | undefined = getVersionFromPKGBUILD(manifestPath.replace("/.aurmanifest.json", ""))
-		if (pkgbuildVersion === undefined) {
-			core.warning(`Unable to get package version from PKGBUILD (${manifest.name})`)
-			continue
-		}
-
-		// TODO: Ask updateProvider what the latest version is
-
-		// TODO: Check if PKGBUILD and latest versions are the same
-
-		// TODO: Check if a PR has already been opened
-
-		// TODO: Ask updateProvider for the update data to act upon
-
-		// TODO: Update PKGBUILD with new version
-
-		// TODO: Update PKGBUILD source arrays with sources (if provided by updateProvider)
-
-		// TODO: Write PKGBUILD changes to disk
-
-		// TODO: Run updpkgsums if requested by updateProvider
-
-		// TODO: Commit and push changes
-
-		// TODO: Open PR with any custom text from updateProvider
 	}
+}
+
+function handleManifest(manifestPath: string, pkgbuildPath: string) {
+	const manifest = JSON.parse(fs.readFileSync(manifestPath).toString()) as IManifest
+
+	if (manifest.automaticUpdates === undefined || manifest.automaticUpdates.type === undefined) {
+		return
+	}
+
+	const updProv = updateProviders.get(manifest.automaticUpdates.type)
+	if (updProv === undefined) {
+		core.warning(`Unknown automaticUpdates type '${manifest.automaticUpdates.type}' in ${manifestPath}`)
+		return
+	}
+
+	const pkgbuildVersion: string | undefined = getVersionFromPKGBUILD(manifestPath.replace("/.aurmanifest.json", ""))
+	if (pkgbuildVersion === undefined) {
+		core.warning(`Unable to get package version from PKGBUILD (${manifest.name})`)
+		return
+	}
+
+	// TODO: Ask updateProvider what the latest version is
+
+	// TODO: Check if PKGBUILD and latest versions are the same
+
+	// TODO: Check if a PR has already been opened
+
+	// TODO: Ask updateProvider for the update data to act upon
+
+	// TODO: Update PKGBUILD with new version
+
+	// TODO: Update PKGBUILD source arrays with sources (if provided by updateProvider)
+
+	// TODO: Write PKGBUILD changes to disk
+
+	// TODO: Run updpkgsums if requested by updateProvider
+
+	// TODO: Commit and push changes
+
+	// TODO: Open PR with any custom text from updateProvider
 }
 
 function getVersionFromPKGBUILD(dir: string): string | undefined {
