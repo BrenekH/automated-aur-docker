@@ -78,13 +78,22 @@ function handleManifest(manifestPath: string, pkgbuildPath: string) {
 	// Check current branches for latestVersion
 	if (util.hasVersionAlreadyBeenPushed(manifest.name, latestVersion)) return
 
-	// TODO: Ask updateProvider for the update data to act upon
+	const updateData = updProv.updateData(manifest.automaticUpdates)
 
-	// TODO: Update PKGBUILD with new version
+	// Create new branch so that a PR can be made later
+	const branchName = `bot/${manifest.name}/${latestVersion}`
+	execSync(`git checkout -b ${branchName}`, { stdio: 'inherit' })
 
-	// TODO: Update PKGBUILD source arrays with sources (if provided by updateProvider)
+	let pkgbuildContents: string = fs.readFileSync(pkgbuildPath).toString()
 
-	// TODO: Write PKGBUILD changes to disk
+	// Update PKGBUILD with new version (pkgver to latestVersion and pkgrel to 1)
+	pkgbuildContents = pkgbuildContents.replace(/^pkgver=.*/m, `pkgver=${latestVersion}`)
+	pkgbuildContents = pkgbuildContents.replace(/^pkgrel=.*/m, "pkgrel=1")
+
+	// Update PKGBUILD source arrays with new sources (if provided by updateProvider)
+	pkgbuildContents = util.updateSourceArrays(pkgbuildContents, updateData)
+
+	fs.writeFileSync(pkgbuildPath, pkgbuildContents)
 
 	// TODO: Run updpkgsums if requested by updateProvider
 
