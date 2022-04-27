@@ -55,10 +55,8 @@ try {
 			continue
 		}
 
-		// Mark workspace as a safe directory for git operations
-		// execSync("git config --global --add safe.directory /github/workspace")
-
-		// Change permissions so that everything "should be" writable
+		// Change permissions so that everything "should be" writable and so git won't complain
+		// about an unsafe directory
 		execSync("sudo chown -R builder:builder $(pwd)", { stdio: 'inherit' })
 
 		core.info(execSync("git remote -v").toString())
