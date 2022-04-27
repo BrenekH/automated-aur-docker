@@ -27,9 +27,9 @@ def test(pkg_dir_str: str) -> Tuple[str, bool]:
 			print("[ERROR] testCmd must be a string or null")
 			sys.exit(1)
 
-	check_results = "testCmd is null"
+	check_results = "## Test Command not run (testCmd is null)"
 	if testCmd != None:
-		check_results = f"testCmd:\nStdout:\n{testCmd_proc.stdout}\nStderr:\n{testCmd_proc.stderr}\n"
+		check_results = f"## Test Command:\n### Stdout:\n```\n{testCmd_proc.stdout}\n```\n### Stderr:\n```\n{testCmd_proc.stderr}\n```\n"
 
 	return check_results, testCmd_proc.returncode != 0 if testCmd != None else False
 
