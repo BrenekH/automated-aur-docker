@@ -60,6 +60,8 @@ try {
 			continue
 		}
 
+		core.info(execSync("git remote get-url origin").toString())
+
 		// Change permissions so that everything "should be" writable
 		execSync("sudo chown -R builder:builder $(pwd)", { stdio: 'inherit' })
 
