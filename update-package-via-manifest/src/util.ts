@@ -38,19 +38,19 @@ export function updateSourceArrays(contents: string, arrays: {
 	}
 
 	if (arrays.source_x86_64 !== undefined) {
-		contents = contents.replace(/^source_x86_64=\(.*\)/m, `source=${formatAsBashArray(arrays.source_x86_64)}`)
+		contents = contents.replace(/^source_x86_64=\(.*\)/m, `source_x86_64=${formatAsBashArray(arrays.source_x86_64)}`)
 	}
 
 	if (arrays.source_i686 !== undefined) {
-		contents = contents.replace(/^source_i686=\(.*\)/m, `source=${formatAsBashArray(arrays.source_i686)}`)
+		contents = contents.replace(/^source_i686=\(.*\)/m, `source_i686=${formatAsBashArray(arrays.source_i686)}`)
 	}
 
 	if (arrays.source_aarch64 !== undefined) {
-		contents = contents.replace(/^source_aarch64=\(.*\)/m, `source=${formatAsBashArray(arrays.source_aarch64)}`)
+		contents = contents.replace(/^source_aarch64=\(.*\)/m, `source_aarch64=${formatAsBashArray(arrays.source_aarch64)}`)
 	}
 
 	if (arrays.source_armv7h !== undefined) {
-		contents = contents.replace(/^source_arm7vh=\(.*\)/m, `source=${formatAsBashArray(arrays.source_armv7h)}`)
+		contents = contents.replace(/^source_armv7h=\(.*\)/m, `source_armv7h=${formatAsBashArray(arrays.source_armv7h)}`)
 	}
 
 	return contents
