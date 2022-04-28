@@ -6,6 +6,8 @@ import { execSync } from "child_process"
 import { promise as glob } from "glob-promise"
 
 import * as util from "./util"
+import { GitHubUpdateProvider } from "./providers/github"
+import { EquinoxUpdateProvider } from "./providers/equinox"
 
 interface IManifest {
 	name: string,
@@ -18,9 +20,9 @@ interface IManifest {
 	},
 }
 
-interface IUpdateProvider {
-	latestVersion(manifestData: any): string,
-	updateData(manifestData: any): {
+export interface IUpdateProvider {
+	latestVersion(manifestData: any): Promise<string | undefined>,
+	updateData(manifestData: any): Promise<{
 		updateChecksums: boolean,
 		prBody?: string,
 		sourceArray?: Array<string>,
@@ -28,10 +30,13 @@ interface IUpdateProvider {
 		source_i686?: Array<string>,
 		source_aarch64?: Array<string>,
 		source_armv7h?: Array<string>,
-	},
+	} | undefined>,
 }
 
-const updateProviders: Map<string, IUpdateProvider> = new Map<string, IUpdateProvider>();
+const updateProviders: Map<string, IUpdateProvider> = new Map<string, IUpdateProvider>([
+	["github", new GitHubUpdateProvider()],
+	["equinox", new EquinoxUpdateProvider()],
+]);
 
 async function main() {
 	// Identify all packages in the pkgs directory
@@ -42,11 +47,11 @@ async function main() {
 
 		core.info(manifestPath)
 
-		handleManifest(manifestPath, pkgbuildPath)
+		await handleManifest(manifestPath, pkgbuildPath)
 	}
 }
 
-function handleManifest(manifestPath: string, pkgbuildPath: string) {
+async function handleManifest(manifestPath: string, pkgbuildPath: string) {
 	const manifest = JSON.parse(fs.readFileSync(manifestPath).toString()) as IManifest
 
 	if (manifest.automaticUpdates === undefined || manifest.automaticUpdates.type === undefined) {
@@ -65,9 +70,10 @@ function handleManifest(manifestPath: string, pkgbuildPath: string) {
 		return
 	}
 
-	const latestVersion = updProv.latestVersion(manifest.automaticUpdates)
-
+	const latestVersion = await updProv.latestVersion(manifest.automaticUpdates)
 	core.info(`PKGBUILD: '${pkgbuildVersion}' Latest: '${latestVersion}'`)
+
+	if (latestVersion === undefined) return
 
 	if (pkgbuildVersion === latestVersion) return
 
@@ -78,7 +84,12 @@ function handleManifest(manifestPath: string, pkgbuildPath: string) {
 	// Check current branches for latestVersion
 	if (util.hasVersionAlreadyBeenPushed(manifest.name, latestVersion)) return
 
-	const updateData = updProv.updateData(manifest.automaticUpdates)
+	const updateData = await updProv.updateData(manifest.automaticUpdates)
+
+	if (updateData === undefined) {
+		core.warning(`Cannot operate on undefined data from ${manifest.automaticUpdates.type} update provider. Skipping ${manifestPath}`)
+		return
+	}
 
 	// Create new branch so that a PR can be made later
 	const branchName = `bot/${manifest.name}/${latestVersion}`
