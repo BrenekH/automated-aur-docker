@@ -22,6 +22,7 @@ interface IUpdateProvider {
 	latestVersion(manifestData: any): string,
 	updateData(manifestData: any): {
 		updateChecksums: boolean,
+		prBody?: string,
 		sourceArray?: Array<string>,
 		source_x86_64?: Array<string>,
 		source_i686?: Array<string>,
@@ -42,7 +43,6 @@ async function main() {
 		core.info(manifestPath)
 
 		handleManifest(manifestPath, pkgbuildPath)
-
 	}
 }
 
@@ -103,9 +103,35 @@ function handleManifest(manifestPath: string, pkgbuildPath: string) {
 		})
 	}
 
-	// TODO: Commit and push changes
+	// git add and commit updated PKGBUILD
+	execSync(`git add ${pkgbuildPath}`, { stdio: 'inherit' })
+	execSync(`git commit -m "Update ${manifest.name} to ${latestVersion}"`, {
+		stdio: "inherit",
+		env: {
+			GIT_AUTHOR_NAME: "github-actions[bot]",
+			GIT_AUTHOR_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com",
+			GIT_COMMITTER_NAME: "github-actions[bot]",
+			GIT_COMMITTER_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com",
+			EMAIL: "41898282+github-actions[bot]@users.noreply.github.com",
+		}
+	})
 
-	// TODO: Open PR with any custom text from updateProvider
+	// Push changes to GitHub
+	execSync(`git push origin ${branchName}`, { stdio: 'inherit' })
+
+	// Create a pull request with the changes
+	const octokit = github.getOctokit(core.getInput("github-token"))
+	octokit.rest.pulls.create({
+		...github.context.repo,
+		head: branchName,
+		base: "master",
+		maintainer_can_modify: true,
+		title: `Update ${manifest.name} to ${latestVersion}`,
+		body: updateData.prBody,
+	})
+
+	// Switch back to master branch
+	execSync(`git checkout master`, { stdio: 'inherit' })
 }
 
 try {
