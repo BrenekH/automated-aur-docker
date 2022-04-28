@@ -38,7 +38,7 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 
 		this.lastTagHTMLLink = resp.data.html_url
 
-		return resp.data.tag_name
+		return resp.data.tag_name.replace(/^v/m, "") // Make sure any leading v's are removed
 	}
 
 	async updateData(_: IManifestData): Promise<{
