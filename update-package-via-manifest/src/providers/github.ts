@@ -56,7 +56,7 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 
 		return {
 			updateChecksums: true,
-			prContent: `_GitHub Release Link:_ [${this.lastTagHTMLLink}](${this.lastTagHTMLLink})`
+			prContent: `__GitHub Release Link:__ [${this.lastTagHTMLLink}](${this.lastTagHTMLLink})`
 		}
 	}
 }
