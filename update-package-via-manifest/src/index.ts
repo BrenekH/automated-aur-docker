@@ -24,7 +24,7 @@ export interface IUpdateProvider {
 	latestVersion(manifestData: any): Promise<string | undefined>,
 	updateData(manifestData: any): Promise<{
 		updateChecksums: boolean,
-		prBody?: string,
+		prContent?: string,
 		sourceArray?: Array<string>,
 		source_x86_64?: Array<string>,
 		source_i686?: Array<string>,
@@ -138,7 +138,7 @@ async function handleManifest(manifestPath: string, pkgbuildPath: string) {
 		base: "master",
 		maintainer_can_modify: true,
 		title: `Update ${manifest.name} to ${latestVersion}`,
-		body: updateData.prBody,
+		body: `${(updateData.prContent !== undefined) ? updateData.prContent + "\n\n" : ""}_This PR was opened by the automatic package updates component of the[Automatic AUR system](https://github.com/BrenekH/automated-aur#README)._`,
 	})
 
 	// Switch back to master branch

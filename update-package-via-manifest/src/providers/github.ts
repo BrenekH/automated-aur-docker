@@ -43,7 +43,7 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 
 	async updateData(_: IManifestData): Promise<{
 		updateChecksums: boolean
-		prBody?: string | undefined
+		prContent?: string | undefined
 		sourceArray?: string[] | undefined
 		source_x86_64?: string[] | undefined
 		source_i686?: string[] | undefined
@@ -56,7 +56,7 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 
 		return {
 			updateChecksums: true,
-			prBody: `_GitHub Release Link:_ [${this.lastTagHTMLLink}](${this.lastTagHTMLLink})`
+			prContent: `_GitHub Release Link:_ [${this.lastTagHTMLLink}](${this.lastTagHTMLLink})`
 		}
 	}
 }
