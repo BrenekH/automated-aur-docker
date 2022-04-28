@@ -1,12 +1,40 @@
+import * as core from "@actions/core"
+import * as github from "@actions/github"
+
 import { IUpdateProvider } from "../index"
 
 interface IManifestData {
-
+	repo: string
 }
 
 export class GitHubUpdateProvider implements IUpdateProvider {
 	async latestVersion(manifestData: IManifestData): Promise<string | undefined> {
-		throw new Error("Method not implemented.")
+		const split = manifestData.repo.split("/")
+		const owner = split[0]
+		const repoName = split[1]
+
+		if (owner === undefined || repoName === undefined) {
+			return undefined
+		}
+
+		const octokit = github.getOctokit(core.getInput("github-token"))
+
+		let resp;
+		try {
+			resp = await octokit.rest.repos.getLatestRelease({
+				owner: owner,
+				repo: repoName,
+			})
+		} catch (e: any) {
+			core.warning(e)
+			return undefined
+		}
+
+		if (resp.status !== 200) {
+			return undefined
+		}
+
+		return resp.data.tag_name
 	}
 
 	async updateData(manifestData: IManifestData): Promise<{
@@ -18,6 +46,8 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 		source_aarch64?: string[] | undefined
 		source_armv7h?: string[] | undefined
 	} | undefined> {
-		throw new Error("Method not implemented.")
+		return {
+			updateChecksums: true,
+		}
 	}
 }
