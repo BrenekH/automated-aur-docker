@@ -138,7 +138,7 @@ async function handleManifest(manifestPath: string, pkgbuildPath: string) {
 		base: "master",
 		maintainer_can_modify: true,
 		title: `Update ${manifest.name} to ${latestVersion}`,
-		body: `${(updateData.prContent !== undefined) ? updateData.prContent + "\n\n" : ""}_This PR was opened by the automatic package updates component of the [Automatic AUR system](https://github.com/BrenekH/automated-aur#README)._`,
+		body: `${(updateData.prContent !== undefined) ? updateData.prContent + "\n\n" : ""}_This PR was automatically opened by the [Automatic AUR system](https://github.com/BrenekH/automated-aur#README)._`,
 	})
 
 	// Switch back to master branch
