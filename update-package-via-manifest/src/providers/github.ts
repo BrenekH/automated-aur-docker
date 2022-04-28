@@ -8,6 +8,8 @@ interface IManifestData {
 }
 
 export class GitHubUpdateProvider implements IUpdateProvider {
+	private lastTagHTMLLink: string | undefined
+
 	async latestVersion(manifestData: IManifestData): Promise<string | undefined> {
 		const split = manifestData.repo.split("/")
 		const owner = split[0]
@@ -34,10 +36,12 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 			return undefined
 		}
 
+		this.lastTagHTMLLink = resp.data.html_url
+
 		return resp.data.tag_name
 	}
 
-	async updateData(manifestData: IManifestData): Promise<{
+	async updateData(_: IManifestData): Promise<{
 		updateChecksums: boolean
 		prBody?: string | undefined
 		sourceArray?: string[] | undefined
@@ -46,8 +50,13 @@ export class GitHubUpdateProvider implements IUpdateProvider {
 		source_aarch64?: string[] | undefined
 		source_armv7h?: string[] | undefined
 	} | undefined> {
+		if (this.lastTagHTMLLink === undefined) {
+			return undefined
+		}
+
 		return {
 			updateChecksums: true,
+			prBody: `_GitHub Release Link:_ [${this.lastTagHTMLLink}](${this.lastTagHTMLLink})`
 		}
 	}
 }
