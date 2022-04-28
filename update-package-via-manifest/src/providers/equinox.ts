@@ -44,7 +44,7 @@ export class EquinoxUpdateProvider implements IUpdateProvider {
 		const source_armv7h: string | undefined = await this.requestArchSourceURL(manifestData.appID, "arm")
 
 		return {
-			updateChecksums: false,
+			updateChecksums: true,
 			source_x86_64: (source_x86_64 !== undefined) ? [source_x86_64] : undefined,    // This weird series of ternary statements is all so that
 			source_i686: (source_i686 !== undefined) ? [source_i686] : undefined,          // requestArchSourceURL can return a string, but we can
 			source_aarch64: (source_aarch64 !== undefined) ? [source_aarch64] : undefined, // also still respect the array-like nature of the
