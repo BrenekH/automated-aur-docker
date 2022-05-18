@@ -1,5 +1,5 @@
 #!/bin/bash
 
-sudo chmod 666 /github/home
+sudo chmod -R 777 /github/home
 
 python -u /buildpkg.py "$@"
