@@ -38,10 +38,12 @@ export class EquinoxUpdateProvider implements IUpdateProvider {
 		source_aarch64?: string[] | undefined
 		source_armv7h?: string[] | undefined
 	} | undefined> {
-		const source_x86_64: string | undefined = await this.requestArchSourceURL(manifestData.appID, "amd64")
-		const source_i686: string | undefined = await this.requestArchSourceURL(manifestData.appID, "i386")
-		const source_aarch64: string | undefined = await this.requestArchSourceURL(manifestData.appID, "arm64")
-		const source_armv7h: string | undefined = await this.requestArchSourceURL(manifestData.appID, "arm")
+		const [source_x86_64, source_i686, source_aarch64, source_armv7h] = await Promise.all([
+			this.requestArchSourceURL(manifestData.appID, "amd64"),
+			this.requestArchSourceURL(manifestData.appID, "i386"),
+			this.requestArchSourceURL(manifestData.appID, "arm64"),
+			this.requestArchSourceURL(manifestData.appID, "arm"),
+		])
 
 		return {
 			updateChecksums: true,
