@@ -15,8 +15,8 @@ def main(_package_dir: str):
 		subprocess.check_call(["git", "clone", f"aur@aur.archlinux.org:{manifest['name']}.git", git_td])
 
 		print("[INFO] Setting up git config")
-		subprocess.check_call(["git", "config", "user.name", "Brenek Harrison"], cwd=git_td)
-		subprocess.check_call(["git", "config", "user.email", "brenekharrison@gmail.com"], cwd=git_td)
+		subprocess.check_call(["git", "config", "user.name", "BrenekH Automated AUR"], cwd=git_td)
+		subprocess.check_call(["git", "config", "user.email", "brenekharrison+automatedaur@gmail.com"], cwd=git_td)
 
 		# Copy `PKGBUILD` and everything in the `manifest.include` array to the repo.
 		print("[INFO] Copying files to git repo")
