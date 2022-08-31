@@ -38,7 +38,7 @@ def main(_package_dir: str):
 		subprocess.check_call(["git", "add", "-f"] + ["PKGBUILD", ".SRCINFO", ".gitignore"] + manifest["include"],  cwd=git_td)
 
 		print("[INFO] Committing")
-		commit_msg = gen_commit_msg(git_td) + ["-m", "Automatically committed from https://github.com/BrenekH/automated-aur."]
+		commit_msg = gen_commit_msg(git_td)
 		print(commit_msg)
 		subprocess.check_call(["git", "commit"] + commit_msg, cwd=git_td)
 
@@ -56,6 +56,13 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 		shutil.copy(f, dir / f.name)
 
 def gen_commit_msg(cwd) -> List[str]:
+	with Path(os.getenv("GITHUB_EVENT_PATH")).open("r") as f:
+		event = json.load(f)
+	pr_title = event["pull_request"]["title"]
+	pr_num = event["pull_request"]["number"]
+
+	bot_commit_msg = f"Automatically committed from https://github.com/BrenekH/automated-aur/pull/{pr_num}."
+
 	changes = subprocess.check_output(["git", "commit", "--short"], universal_newlines=True, cwd=cwd)
 
 	if "PKGBUILD" in changes:
@@ -73,15 +80,12 @@ def gen_commit_msg(cwd) -> List[str]:
 				pkgver = re.search(r"pkgver=(.*)", pkgbuild_contents).group().replace("pkgver=", "") # Even though I'm using capturing groups,
 				pkgrel = re.search(r"pkgrel=(.*)", pkgbuild_contents).group().replace("pkgrel=", "") # I still need to replace the extra stuff in each line
 
-				return ["-m", f"Update to {pkgver}-{pkgrel}"]
+				return ["-m", f"Update to {pkgver}-{pkgrel}", "-m", bot_commit_msg]
 		except subprocess.CalledProcessError:
 			pass
 
 	# Use PR title as commit title
-	with Path(os.getenv("GITHUB_EVENT_PATH")).open("r") as f:
-		event = json.load(f)
-
-	return ["-m", event["pull_request"]["title"]]
+	return ["-m", pr_title, "-m", bot_commit_msg]
 
 if __name__ == "__main__":
 	main(sys.argv[1])
