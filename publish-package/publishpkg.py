@@ -61,6 +61,8 @@ def gen_commit_msg(cwd) -> List[str]:
 	pr_title = event["pull_request"]["title"]
 	pr_num = event["pull_request"]["number"]
 
+	bot_commit_msg = f"Automatically committed from https://github.com/BrenekH/automated-aur/pull/{pr_num}."
+
 	changes = subprocess.check_output(["git", "commit", "--short"], universal_newlines=True, cwd=cwd)
 
 	if "PKGBUILD" in changes:
@@ -78,12 +80,12 @@ def gen_commit_msg(cwd) -> List[str]:
 				pkgver = re.search(r"pkgver=(.*)", pkgbuild_contents).group().replace("pkgver=", "") # Even though I'm using capturing groups,
 				pkgrel = re.search(r"pkgrel=(.*)", pkgbuild_contents).group().replace("pkgrel=", "") # I still need to replace the extra stuff in each line
 
-				return ["-m", f"Update to {pkgver}-{pkgrel}", "-m", "Automatically committed from https://github.com/BrenekH/automated-aur."]
+				return ["-m", f"Update to {pkgver}-{pkgrel}", "-m", bot_commit_msg]
 		except subprocess.CalledProcessError:
 			pass
 
 	# Use PR title as commit title
-	return ["-m", pr_title, "-m", "Automatically committed from https://github.com/BrenekH/automated-aur."]
+	return ["-m", pr_title, "-m", bot_commit_msg]
 
 if __name__ == "__main__":
 	main(sys.argv[1])
