@@ -28,7 +28,7 @@ def main(_package_dir: str):
 		with (Path(git_td) / ".SRCINFO").open("w") as f:
 			f.write(src_info)
 
-		# Ensure proper .gitignore file is in the repo (useful for new packages, not yet uploaded).
+		# Write out proper .gitignore file (useful for new packages not yet uploaded).
 		print("[INFO] Writing .gitignore")
 		with (Path(git_td) / ".gitignore").open("w") as f:
 			f.write("# Require every item to be force added\n*")
