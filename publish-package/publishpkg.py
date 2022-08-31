@@ -56,7 +56,7 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 		shutil.copy(f, dir / f.name)
 
 def gen_commit_msg(cwd) -> List[str]:
-	with Path(os.getenv("GITHUB_EVENT_PATH")).open("r") as f:
+	with open(os.getenv("GITHUB_EVENT_PATH"), "r") as f:
 		event = json.load(f)
 	pr_title = event["pull_request"]["title"]
 	pr_num = event["pull_request"]["number"]
