@@ -56,6 +56,11 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 		shutil.copy(f, dir / f.name)
 
 def gen_commit_msg(cwd) -> List[str]:
+	with Path(os.getenv("GITHUB_EVENT_PATH")).open("r") as f:
+		event = json.load(f)
+	pr_title = event["pull_request"]["title"]
+	pr_num = event["pull_request"]["number"]
+
 	changes = subprocess.check_output(["git", "commit", "--short"], universal_newlines=True, cwd=cwd)
 
 	if "PKGBUILD" in changes:
@@ -78,10 +83,7 @@ def gen_commit_msg(cwd) -> List[str]:
 			pass
 
 	# Use PR title as commit title
-	with Path(os.getenv("GITHUB_EVENT_PATH")).open("r") as f:
-		event = json.load(f)
-
-	return ["-m", event["pull_request"]["title"], "-m", "Automatically committed from https://github.com/BrenekH/automated-aur."]
+	return ["-m", pr_title, "-m", "Automatically committed from https://github.com/BrenekH/automated-aur."]
 
 if __name__ == "__main__":
 	main(sys.argv[1])
