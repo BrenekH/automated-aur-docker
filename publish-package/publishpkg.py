@@ -58,14 +58,15 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 def gen_commit_msg(cwd) -> List[str]:
 	with open(os.getenv("GITHUB_EVENT_PATH"), "r") as f:
 		event = json.load(f)
-	pr_title = event["pull_request"]["title"]
+	pr_title: str = event["pull_request"]["title"]
 	pr_num = event["pull_request"]["number"]
 
 	bot_commit_msg = f"Automatically committed from https://github.com/BrenekH/automated-aur/pull/{pr_num}."
 
 	changes = subprocess.check_output(["git", "commit", "--short"], universal_newlines=True, cwd=cwd)
 
-	if "PKGBUILD" in changes:
+	# Create update commit title (Update to <version>)
+	if pr_title.startswith("Update") and "PKGBUILD" in changes:
 		try:
 			pkgbuild_diff = subprocess.check_output(["git", "diff", "HEAD~1", "PKGBUILD"], cwd=cwd, universal_newlines=True)
 
@@ -80,7 +81,8 @@ def gen_commit_msg(cwd) -> List[str]:
 				pkgver = re.search(r"pkgver=(.*)", pkgbuild_contents).group().replace("pkgver=", "") # Even though I'm using capturing groups,
 				pkgrel = re.search(r"pkgrel=(.*)", pkgbuild_contents).group().replace("pkgrel=", "") # I still need to replace the extra stuff in each line
 
-				return ["-m", f"Update to {pkgver}-{pkgrel}", "-m", bot_commit_msg]
+				if pkgver_match is not None and pkgrel == "1": # Final check to ensure that the change was a simple upstream update
+					return ["-m", f"Update to {pkgver}-{pkgrel}", "-m", bot_commit_msg]
 		except subprocess.CalledProcessError:
 			pass
 
