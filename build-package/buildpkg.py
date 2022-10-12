@@ -68,6 +68,9 @@ def create_results_text(title: str, pairs: List[Tuple[str, str]]) -> str:
 
 	return f"""## {title}:\n{pair_str}"""
 
+def set_output(name: str, value: str):
+	print(f"::set-output name={name}::{value}")
+
 if __name__ == "__main__":
 	output, failed = build(sys.argv[1])
 
@@ -75,8 +78,8 @@ if __name__ == "__main__":
 		print(output, f"Failed: {failed}")
 	else:
 		output = output.replace("\n", "\\n").replace('"', '\\"')
-		print(f"::set-output name=result::{output}")
-		print(f"::set-output name=failed::{failed}")
+		set_output("result", output)
+		set_output("failed", failed)
 
 		if failed:
 			sys.exit(1)

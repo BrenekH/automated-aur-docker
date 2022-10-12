@@ -40,6 +40,9 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 			continue
 		shutil.copy(f, dir / f.name)
 
+def set_output(name: str, value: str):
+	print(f"::set-output name={name}::{value}")
+
 if __name__ == "__main__":
 	results_out, failed = test(sys.argv[1])
 
@@ -47,7 +50,7 @@ if __name__ == "__main__":
 		print(f"{results_out}\n\nFailed: {failed}")
 	else:
 		results_out = results_out.replace("\n", "\\n").replace('"', '\\"')
-		print(f"::set-output name=result::{results_out}")
-		print(f"::set-output name=failed::{'true' if failed else 'false'}")
+		set_output("result", results_out)
+		set_output("failed", "true" if failed else "false")
 		if failed:
 			sys.exit(1)
