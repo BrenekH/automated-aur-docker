@@ -1,5 +1,5 @@
 #!/bin/env python3
-import json, tempfile, shutil, subprocess, sys
+import json, os, shutil, subprocess, sys
 from pathlib import Path
 from typing import List, Tuple
 
@@ -40,8 +40,18 @@ def copy_files_to_dir(files: List[Path], dir: Path):
 			continue
 		shutil.copy(f, dir / f.name)
 
-def set_output(name: str, value: str):
-	print(f"::set-output name={name}::{value}")
+def set_output(name: str, value: str | bool):
+	outputEnvVar = os.getenv("GITHUB_OUTPUT")
+	if outputEnvVar == None:
+		return
+
+	outputPath = Path(outputEnvVar)
+
+	if isinstance(value, bool):
+		value = "true" if value else "false"
+
+	with outputPath.open("a") as f:
+		f.write(f"{name}={value}")
 
 if __name__ == "__main__":
 	results_out, failed = test(sys.argv[1])
@@ -51,6 +61,6 @@ if __name__ == "__main__":
 	else:
 		results_out = results_out.replace("\n", "\\n").replace('"', '\\"')
 		set_output("result", results_out)
-		set_output("failed", "true" if failed else "false")
+		set_output("failed", failed)
 		if failed:
 			sys.exit(1)

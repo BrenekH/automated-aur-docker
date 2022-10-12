@@ -68,8 +68,18 @@ def create_results_text(title: str, pairs: List[Tuple[str, str]]) -> str:
 
 	return f"""## {title}:\n{pair_str}"""
 
-def set_output(name: str, value: str):
-	print(f"::set-output name={name}::{value}")
+def set_output(name: str, value: str | bool):
+	outputEnvVar = os.getenv("GITHUB_OUTPUT")
+	if outputEnvVar == None:
+		return
+
+	outputPath = Path(outputEnvVar)
+
+	if isinstance(value, bool):
+		value = "true" if value else "false"
+
+	with outputPath.open("a") as f:
+		f.write(f"{name}={value}")
 
 if __name__ == "__main__":
 	output, failed = build(sys.argv[1])
