@@ -79,7 +79,7 @@ def set_output(name: str, value: str | bool):
 		value = "true" if value else "false"
 
 	with outputPath.open("a") as f:
-		f.write(f"{name}={value}")
+		f.write(f"{name}={value}\n")
 
 if __name__ == "__main__":
 	output, failed = build(sys.argv[1])
