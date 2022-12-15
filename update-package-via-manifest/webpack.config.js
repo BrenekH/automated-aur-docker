@@ -28,7 +28,8 @@ const commonConfig = {
 		fallback: {
 			"fs": false,
 			"path": false
-		}
+		},
+		preferRelative: true,
 	},
 	devtool: "source-map",
 	experiments: {
