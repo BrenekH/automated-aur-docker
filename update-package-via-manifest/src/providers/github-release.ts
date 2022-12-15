@@ -7,7 +7,7 @@ interface IManifestData {
 	repo: string
 }
 
-export class GitHubUpdateProvider implements IUpdateProvider {
+export class GitHubReleaseUpdateProvider implements IUpdateProvider {
 	private lastTagHTMLLink: string | undefined
 
 	async latestVersion(manifestData: IManifestData): Promise<string | undefined> {

@@ -6,7 +6,7 @@ import { execSync } from "child_process"
 import { promise as glob } from "glob-promise"
 
 import * as util from "./util"
-import { GitHubUpdateProvider } from "./providers/github"
+import { GitHubReleaseUpdateProvider } from "./providers/github-release"
 import { EquinoxUpdateProvider } from "./providers/equinox"
 
 interface IManifest {
@@ -34,7 +34,7 @@ export interface IUpdateProvider {
 }
 
 const updateProviders: Map<string, IUpdateProvider> = new Map<string, IUpdateProvider>([
-	["github", new GitHubUpdateProvider()],
+	["github-releases", new GitHubReleaseUpdateProvider()],
 	["equinox", new EquinoxUpdateProvider()],
 ]);
 
