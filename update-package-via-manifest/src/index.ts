@@ -6,9 +6,9 @@ import { execSync } from "child_process"
 import { promise as glob } from "glob-promise"
 
 import * as util from "./util"
-import { GitHubReleaseUpdateProvider } from "./providers/github-release"
+import { GitHubReleaseUpdateProvider } from "./providers/github-releases"
 import { EquinoxUpdateProvider } from "./providers/equinox"
-import { GitHubTagUpdateProvider } from "./providers/github-tag"
+import { GitHubTagUpdateProvider } from "./providers/github-tags"
 
 interface IManifest {
 	name: string,
