@@ -8,6 +8,7 @@ import { promise as glob } from "glob-promise"
 import * as util from "./util"
 import { GitHubReleaseUpdateProvider } from "./providers/github-release"
 import { EquinoxUpdateProvider } from "./providers/equinox"
+import { GitHubTagUpdateProvider } from "./providers/github-tag"
 
 interface IManifest {
 	name: string,
@@ -36,6 +37,7 @@ export interface IUpdateProvider {
 const updateProviders: Map<string, IUpdateProvider> = new Map<string, IUpdateProvider>([
 	["github-releases", new GitHubReleaseUpdateProvider()],
 	["equinox", new EquinoxUpdateProvider()],
+	["github-tags", new GitHubTagUpdateProvider()],
 ]);
 
 async function main() {
