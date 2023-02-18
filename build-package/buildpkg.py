@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 def build(pkg_dir_str: str) -> Tuple[str, bool]:
-	"""build builds a package and runs namcap against the PKGBUILD and the resulting .pkg.tar.zst
+	"""Build a package and run namcap against the PKGBUILD and the resulting .pkg.tar.zst
 
 	Args:
 		pkg_dir_str (str): The directory to read the .aurmanifest.json from
@@ -20,6 +20,9 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 	with tempfile.TemporaryDirectory() as td:
 		# Copy PKGBUILD and everything in the manifest.include list to a new directory in /tmp.
 		copy_files_to_dir([pkg_dir / "PKGBUILD"] + [pkg_dir / f for f in manifest["include"]], Path(td))
+
+		# TODO: Install AUR dependencies from .aurmanifest.json
+		subprocess.run(["/yay", "-S", ""])
 
 		print("[INFO] Running makepkg")
 		makepkg_proc = subprocess.run(["makepkg", "-sm", "--noconfirm", "--noprogressbar"], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
