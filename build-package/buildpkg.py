@@ -22,7 +22,8 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 		copy_files_to_dir([pkg_dir / "PKGBUILD"] + [pkg_dir / f for f in manifest["include"]], Path(td))
 
 		# TODO: Install AUR dependencies from .aurmanifest.json
-		subprocess.run(["/yay", "-S", ""])
+		if "aurDeps" in manifest and len(manifest["aurDeps"]) > 0:
+			subprocess.run(["/opt/paru", "--noconfirm", "-S"] + [pkg for pkg in manifest["aurDeps"]])
 
 		print("[INFO] Running makepkg")
 		makepkg_proc = subprocess.run(["makepkg", "-sm", "--noconfirm", "--noprogressbar"], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)

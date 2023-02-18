@@ -9,11 +9,11 @@ RUN pacman -Syu --noconfirm --needed python sudo git namcap wget &&\
 	mkdir /buildout && chown -R builder:builder /buildout &&\
 	chmod +x /buildpkg.py /entrypoint.sh &&\
 	cd /tmp &&\
-	wget -O yay.tar.gz "https://github.com/Jguer/yay/releases/download/v11.3.2/yay_11.3.2_x86_64.tar.gz" &&\
-	tar -xzf yay.tar.gz &&\
-	cp yay_*/yay /opt/yay &&\
-	rm -rf yay* &&\
-	pacman -Rns wget
+	wget -O paru.tar.gz "https://github.com/Morganamilo/paru/releases/download/v1.11.2/paru-v1.11.2-x86_64.tar.zst" &&\
+	tar -xf paru.tar.gz &&\
+	cp ./paru /opt/paru &&\
+	rm -rf paru.tar.gz paru paru.conf man completions locale &&\
+	pacman -Rns --noconfirm wget
 
 USER builder
 
