@@ -5,4 +5,6 @@ sudo chmod 666 $GITHUB_OUTPUT
 
 python -u /buildpkg.py "$@"
 
-cp ~/.cache/paru/clone/*/*.pkg.tar.zst $GITHUB_WORKSPACE/
+if [ -d "~/.cache/paru" ]; then
+	sudo cp ~/.cache/paru/clone/*/*.pkg.tar.zst $GITHUB_WORKSPACE/
+fi
