@@ -84,7 +84,10 @@ async function handleManifest(manifestPath: string, pkgbuildPath: string) {
 	execSync("sudo chown -R builder:builder $(pwd)", { stdio: 'inherit' })
 
 	// Check current branches for latestVersion
-	if (util.hasVersionAlreadyBeenPushed(manifest.name, latestVersion)) return
+	if (util.hasVersionAlreadyBeenPushed(manifest.name, latestVersion)) {
+		core.info(`Update for ${manifest.name}@${latestVersion} has already been pushed`)
+		return
+	}
 
 	const updateData = await updProv.updateData(manifest.automaticUpdates)
 
@@ -94,6 +97,8 @@ async function handleManifest(manifestPath: string, pkgbuildPath: string) {
 	}
 
 	// Create new branch so that a PR can be made later
+	core.debug("Checking out new branch")
+	core.info("Checking out new branch")
 	const branchName = `bot/${manifest.name}/${latestVersion}`
 	execSync(`git checkout -b ${branchName}`, { stdio: 'inherit' })
 
@@ -106,6 +111,7 @@ async function handleManifest(manifestPath: string, pkgbuildPath: string) {
 	// Update PKGBUILD source arrays with new sources (if provided by updateProvider)
 	pkgbuildContents = util.updateSourceArrays(pkgbuildContents, updateData)
 
+	core.info("Writing updated file")
 	fs.writeFileSync(pkgbuildPath, pkgbuildContents)
 
 	// Update checksums in PKGBUILD
@@ -116,6 +122,7 @@ async function handleManifest(manifestPath: string, pkgbuildPath: string) {
 		})
 	}
 
+	core.info("Committing changes and pushing")
 	// git add and commit updated PKGBUILD
 	execSync(`git add ${pkgbuildPath}`, { stdio: 'inherit' })
 	execSync(`git commit -m "Update ${manifest.name} to ${latestVersion}"`, {
@@ -133,6 +140,7 @@ async function handleManifest(manifestPath: string, pkgbuildPath: string) {
 	execSync(`git push origin ${branchName}`, { stdio: 'inherit' })
 
 	// Create a pull request with the changes
+	core.info("Opening PR")
 	const octokit = github.getOctokit(core.getInput("github-token"))
 	octokit.rest.pulls.create({
 		...github.context.repo,
