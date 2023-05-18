@@ -1,8 +1,5 @@
 #!/bin/bash
 
-ls -al $GITHUB_WORKSPACE
-ls -alR $GITHUB_WORKSPACE
-
 pacman -Syu
 
 # We "install" the built packages twice, once without dependency checks and once with, so
