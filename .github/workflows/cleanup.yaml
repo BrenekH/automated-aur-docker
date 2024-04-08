@@ -2,7 +2,7 @@ name: Cleanup old images
 
 on:
   schedule:
-    - cron: "45 3 * * 1"
+    - cron: "40 1 * * 1"
   workflow_dispatch:
 
 jobs:
