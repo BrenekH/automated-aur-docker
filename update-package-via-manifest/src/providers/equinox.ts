@@ -4,7 +4,8 @@ import axios from "axios"
 import { IUpdateProvider } from "../index"
 
 interface IManifestData {
-	appID: string
+	appID: string,
+	appSlug: string,
 }
 
 export class EquinoxUpdateProvider implements IUpdateProvider {
@@ -38,39 +39,53 @@ export class EquinoxUpdateProvider implements IUpdateProvider {
 		source_aarch64?: string[] | undefined
 		source_armv7h?: string[] | undefined
 	} | undefined> {
-		const [source_x86_64, source_i686, source_aarch64, source_armv7h] = await Promise.all([
-			this.requestArchSourceURL(manifestData.appID, "amd64"),
-			this.requestArchSourceURL(manifestData.appID, "i386"),
-			this.requestArchSourceURL(manifestData.appID, "arm64"),
-			this.requestArchSourceURL(manifestData.appID, "arm"),
-		])
+		const targetArches = [
+			["amd64", "x86_64"],
+			["i386", "i686"],
+			["arm64", "aarch64"],
+			["arm", "armv7h"],
+		];
 
-		return {
-			updateChecksums: true,
-			source_x86_64: (source_x86_64 !== undefined) ? [source_x86_64] : undefined,    // This weird series of ternary statements is all so that
-			source_i686: (source_i686 !== undefined) ? [source_i686] : undefined,          // requestArchSourceURL can return a string, but we can
-			source_aarch64: (source_aarch64 !== undefined) ? [source_aarch64] : undefined, // also still respect the array-like nature of the
-			source_armv7h: (source_armv7h !== undefined) ? [source_armv7h] : undefined,    // source parameters.
+		const latestVersion = await this.latestVersion(manifestData);
+		if (latestVersion === undefined) {
+			return undefined;
 		}
+
+		let returnObject = {
+			updateChecksums: true,
+		};
+
+		(await this.getLinuxSourceURLs(manifestData.appSlug, latestVersion))?.map((sourceURL: string) => {
+			for (const a of targetArches) {
+				if (sourceURL.includes(a[0] as string)) {
+					return {
+						url: sourceURL,
+						arch: a[1] as string,
+					};
+				}
+			}
+
+			return undefined;
+		}).forEach((value) => {
+			if (value === undefined) { return; }
+
+			returnObject = Object.assign(returnObject, { [`source_${value.arch}`]: value.url });
+		});
+
+		return returnObject;
 	}
 
-	private async requestArchSourceURL(appID: string, arch: string): Promise<string | undefined> {
-		const result = await axios.post("https://update.equinox.io/check", {
-			"app_id": appID,
-			"channel": "stable",
-			"current_sha256": "",
-			"current_version": "0.0.0",
-			"goarm": "",
-			"os": "linux",
-			"target_version": "",
-			"arch": arch,
-		})
+	private async getLinuxSourceURLs(appSlug: string, appVersion: string): Promise<string[] | undefined> {
+		const version = appVersion.replace(".", "\\.");
+		const regex = new RegExp(`https:\\/\\/bin\\.equinox\\.io\\/.*\\/.*-${version}-linux-.*\\.tar\\.gz`, "g");
 
+		const result = await axios.get(`https://dl.equinox.io/${appSlug}/stable/archive`);
 		if (result.status !== 200) {
-			core.warning(`Received non-200 status code from update.equinox.io. Status: ${result.statusText}(${result.status}). Data: ${result.data}`)
-			return undefined
+			core.warning(`Received non-200 status code from dl.equinox.io. Status: ${result.statusText}(${result.status}). Data: ${result.data}`);
+			return undefined;
 		}
 
-		return result.data.download_url
+		const matches = regex.exec(result.data);
+		return (matches === null) ? [] : matches;
 	}
 }

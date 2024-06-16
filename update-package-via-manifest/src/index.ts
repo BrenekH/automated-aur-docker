@@ -18,6 +18,7 @@ interface IManifest {
 		type: string,
 		repo: string,
 		appID: string,
+		appSlug: string,
 	},
 }
 
