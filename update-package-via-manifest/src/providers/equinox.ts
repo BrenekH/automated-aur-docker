@@ -41,7 +41,7 @@ export class EquinoxUpdateProvider implements IUpdateProvider {
 	} | undefined> {
 		const targetArches = [
 			["amd64", "x86_64"],
-			["i386", "i686"],
+			["386", "i686"],
 			["arm64", "aarch64"],
 			["arm", "armv7h"],
 		];
@@ -57,7 +57,7 @@ export class EquinoxUpdateProvider implements IUpdateProvider {
 
 		(await this.getLinuxSourceURLs(manifestData.appSlug, latestVersion))?.map((sourceURL: string) => {
 			for (const a of targetArches) {
-				if (sourceURL.includes(a[0] as string)) {
+				if (sourceURL.includes(a[0] as string + ".")) { // Use the beginning of the file extension to ensure arm doesn't match the arm64 url.
 					return {
 						url: sourceURL,
 						arch: a[1] as string,
@@ -69,7 +69,7 @@ export class EquinoxUpdateProvider implements IUpdateProvider {
 		}).forEach((value) => {
 			if (value === undefined) { return; }
 
-			returnObject = Object.assign(returnObject, { [`source_${value.arch}`]: value.url });
+			returnObject = Object.assign(returnObject, { [`source_${value.arch}`]: [value.url] });
 		});
 
 		return returnObject;
@@ -85,7 +85,7 @@ export class EquinoxUpdateProvider implements IUpdateProvider {
 			return undefined;
 		}
 
-		const matches = regex.exec(result.data);
+		const matches = result.data.match(regex);
 		return (matches === null) ? [] : matches;
 	}
 }
