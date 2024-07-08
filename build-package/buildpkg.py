@@ -23,7 +23,7 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 
 		# TODO: Install AUR dependencies from .aurmanifest.json
 		if "aurDeps" in manifest and len(manifest["aurDeps"]) > 0:
-			subprocess.run(["/opt/paru", "--noconfirm", "-Syu"] + [pkg for pkg in manifest["aurDeps"]])
+			subprocess.run(["/opt/paru", "--mflags", "--skippgpcheck", "--noconfirm", "-Syu"] + [pkg for pkg in manifest["aurDeps"]])
 
 		print("[INFO] Running makepkg")
 		makepkg_proc = subprocess.run(["makepkg", "-sm", "--noconfirm", "--noprogressbar"], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
