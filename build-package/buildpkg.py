@@ -17,6 +17,9 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 	with (pkg_dir / ".aurmanifest.json").open("r") as f:
 		manifest = json.load(f)
 
+	# Stores namcap output for each .pkg.tar.zst created by makepkg
+	pkg_file_output = {}
+
 	with tempfile.TemporaryDirectory() as td:
 		# Copy PKGBUILD and everything in the manifest.include list to a new directory in /tmp.
 		copy_files_to_dir([pkg_dir / "PKGBUILD"] + [pkg_dir / f for f in manifest["include"]], Path(td))
@@ -39,23 +42,31 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 			print(f"Skipping remaining checks: makepkg returned a non-zero exit code {makepkg_proc.returncode}")
 			return check_results, True
 
-		# Find the built package
-		built_pkg_file = str(list(Path(td).glob("*.pkg.tar.zst"))[0])
+		# Process all built packages
+		built_pkg_files = list(Path(td).glob("*.pkg.tar.zst"))
 
-		print("[INFO] Running namcap against generated package")
-		pkg_namcap_proc = subprocess.run(["namcap", "-i", built_pkg_file], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+		for built_pkg_file in built_pkg_files:
+			print(f"[INFO] Running namcap against {built_pkg_file}")
+			pkg_namcap_proc = subprocess.run(["namcap", "-i", str(built_pkg_file)], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
-		print("[INFO] Copying built package to GITHUB_WORKSPACE")
-		os.system(f"sudo cp {built_pkg_file} {Path(os.getenv('GITHUB_WORKSPACE')) / 'package.pkg.tar.zst'}")
+			print("[INFO] Copying built package to GITHUB_WORKSPACE")
+			os.system(f"sudo cp {built_pkg_file} {Path(os.getenv('GITHUB_WORKSPACE')) / 'package.pkg.tar.zst'}")
+
+			pkg_file_output[built_pkg_file] = pkg_namcap_proc
 
 	check_results = ""
 	if makepkg_proc.returncode != 0:
 		check_results += create_results_text("makepkg", [("Stdout", makepkg_proc.stdout), ("Stderr", makepkg_proc.stderr)])
 
 	check_results += create_results_text("namcap PKGBUILD", [("Stdout", pkgbuild_namcap_proc.stdout), ("Stderr", pkgbuild_namcap_proc.stderr)])
-	check_results += create_results_text("namcap *.pkg.tar.zst", [("Stdout", pkg_namcap_proc.stdout), ("Stderr", pkg_namcap_proc.stderr)])
 
-	return check_results, makepkg_proc.returncode != 0 or pkgbuild_namcap_proc.returncode != 0 or pkg_namcap_proc.returncode != 0
+	pkg_namcap_got_nonzero_exit = False
+	for path, process_output in pkg_file_output.items():
+		check_results += create_results_text(f"namcap {path.name}", [("Stdout", process_output.stdout), ("Stderr", process_output.stderr)])
+		if process_output.returncode != 0:
+			pkg_namcap_got_nonzero_exit = True
+
+	return check_results, makepkg_proc.returncode != 0 or pkgbuild_namcap_proc.returncode != 0 or pkg_namcap_got_nonzero_exit
 
 def copy_files_to_dir(files: List[Path], dir: Path):
 	for f in files:
