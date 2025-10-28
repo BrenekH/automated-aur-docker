@@ -49,8 +49,8 @@ def build(pkg_dir_str: str) -> Tuple[str, bool]:
 			print(f"[INFO] Running namcap against {built_pkg_file}")
 			pkg_namcap_proc = subprocess.run(["namcap", "-i", str(built_pkg_file)], cwd=td, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
-			print("[INFO] Copying built package to GITHUB_WORKSPACE")
-			os.system(f"sudo cp {built_pkg_file} {Path(os.getenv('GITHUB_WORKSPACE')) / 'package.pkg.tar.zst'}")
+			print(f"[INFO] Copying built package ({built_pkg_file.name}) to GITHUB_WORKSPACE")
+			os.system(f"sudo cp {built_pkg_file} {Path(os.getenv('GITHUB_WORKSPACE')) / built_pkg_file.name}")
 
 			pkg_file_output[built_pkg_file] = pkg_namcap_proc
 
