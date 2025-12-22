@@ -3,7 +3,7 @@ import * as github from "@actions/github"
 import * as path from "path"
 import * as fs from "fs"
 import { execSync } from "child_process"
-import { promise as glob } from "glob-promise"
+import { glob } from "glob"
 
 import * as util from "./util"
 import { GitHubReleaseUpdateProvider } from "./providers/github-releases"
