@@ -1,7 +1,7 @@
 import * as core from "@actions/core"
 import * as github from "@actions/github"
 
-import { IUpdateProvider } from "../index"
+import { IUpdateProvider } from "../index.ts"
 
 interface IManifestData {
 	repo: string

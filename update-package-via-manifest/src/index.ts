@@ -5,10 +5,10 @@ import * as fs from "fs"
 import { execSync } from "child_process"
 import { glob } from "glob"
 
-import * as util from "./util"
-import { GitHubReleaseUpdateProvider } from "./providers/github-releases"
-import { EquinoxUpdateProvider } from "./providers/equinox"
-import { GitHubTagUpdateProvider } from "./providers/github-tags"
+import * as util from "./util.ts"
+import { GitHubReleaseUpdateProvider } from "./providers/github-releases.ts"
+import { EquinoxUpdateProvider } from "./providers/equinox.ts"
+import { GitHubTagUpdateProvider } from "./providers/github-tags.ts"
 
 interface IManifest {
 	name: string,

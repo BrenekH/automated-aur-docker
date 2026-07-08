@@ -1,7 +1,7 @@
 import * as core from "@actions/core"
 import axios from "axios"
 
-import { IUpdateProvider } from "../index"
+import { IUpdateProvider } from "../index.ts"
 
 interface IManifestData {
 	appID: string,

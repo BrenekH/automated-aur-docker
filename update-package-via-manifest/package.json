@@ -3,11 +3,9 @@
   "version": "1.0.0",
   "description": "Update AUR packages in a repository by reading the .aurmanifest.json",
   "main": "lib/index.js",
+  "type": "module",
   "scripts": {
-    "compile": "webpack --config webpack.config.js --mode production",
-    "dev-compile": "webpack --config webpack.config.js --mode development",
-    "tsc": "tsc -p ./",
-    "test": "echo \"test\""
+    "compile": "tsc -p ./"
   },
   "repository": {
     "type": "git",
@@ -20,10 +18,8 @@
   },
   "homepage": "https://github.com/BrenekH/automated-aur#readme",
   "devDependencies": {
-    "ts-loader": "^9.5.4",
-    "typescript": "^7.0.0",
-    "webpack": "^5.104.1",
-    "webpack-cli": "^7.0.0"
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.0"
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
