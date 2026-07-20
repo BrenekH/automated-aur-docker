@@ -1,18 +1,21 @@
-use std::{
-    any::Any,
-    collections::HashMap,
-    env::current_dir,
-    fs,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{any::Any, collections::HashMap, fs, path::PathBuf};
 
 use anyhow::anyhow;
 use gha_main::{GitHubActionResult, gha_main, gha_output};
 use glob::glob;
-use regex::{NoExpand, regex};
 use serde::Deserialize;
 use tracing::info;
+
+use crate::commands::{
+    checkout_new_branch, ensure_folder_permissions, git_checkout_master, update_package_checksums,
+};
+use crate::steps::{
+    commit_and_push_changes, extract_provider_and_data, get_version_from_pkgbuild,
+    open_new_pull_request, update_pkgbuild,
+};
+
+mod commands;
+mod steps;
 
 #[gha_main]
 fn main() -> GitHubActionResult {
@@ -50,23 +53,7 @@ fn handle_manifest(manifest_path: PathBuf) -> anyhow::Result<()> {
     };
 
     // Create UpdateProvider
-    let update_provider: Box<dyn UpdateProvider>;
-    let provider_data: Box<dyn Any>;
-
-    match manifest_auto_updates {
-        ManifestAutoUpdate::GithubReleases(ghreleases_data) => {
-            update_provider = Box::new(Test {});
-            provider_data = Box::new(ghreleases_data);
-        }
-        ManifestAutoUpdate::GithubTags(ghtags_data) => {
-            update_provider = Box::new(Test2 {});
-            provider_data = Box::new(ghtags_data);
-        }
-        ManifestAutoUpdate::Equinox(equinox_data) => {
-            update_provider = Box::new(Test {});
-            provider_data = Box::new(equinox_data);
-        }
-    }
+    let (update_provider, provider_data) = extract_provider_and_data(manifest_auto_updates);
 
     // Extract package version from PKGBUILD
     let pkgbuild_version = get_version_from_pkgbuild(&pkgbuild_path)?;
@@ -83,20 +70,7 @@ fn handle_manifest(manifest_path: PathBuf) -> anyhow::Result<()> {
     // TODO: Check if pull request/branch already exists for latest (new) version
 
     // Update perms so that the builder user owns everything (prevent git complaining about unsafe directory)
-    let cmd_status = Command::new("sudo")
-        .args([
-            "chown",
-            "-R",
-            "builder:builder",
-            &current_dir()?.to_string_lossy(),
-        ])
-        .status()?;
-
-    if !cmd_status.success() {
-        return Err(anyhow!(
-            "`sudo chown -R builder:builder $(pwd)` failed with exit status {cmd_status}"
-        ));
-    }
+    ensure_folder_permissions()?;
 
     // Retrieve PKGBUILD changes from update provider
     let update_data = update_provider.get_update_data(&provider_data)?;
@@ -104,113 +78,26 @@ fn handle_manifest(manifest_path: PathBuf) -> anyhow::Result<()> {
     // Checkout Git to new branch (bot/{manifest.name}/{latest_version})
     info!("Checkout out new branch");
     let branch_name = format!("bot/{}/{}", manifest.name, latest_version);
-    let cmd_status = Command::new("git")
-        .args(["checkout", "-b", &branch_name])
-        .status()?;
+    checkout_new_branch(&branch_name)?;
 
-    if !cmd_status.success() {
-        return Err(anyhow!(
-            "`git checkout -b {branch_name}` failed with exit status {cmd_status}"
-        ));
-    }
-
-    // Update PKGBUILD contents with new version (and reset pkgrel to 1)
-    let pkgbuild_contents = fs::read_to_string(&pkgbuild_path)?;
-
-    let pkgbuild_contents = regex!("(?m)^pkgver=.*$").replace(
-        &pkgbuild_contents,
-        NoExpand(&format!("pkgver={latest_version}")),
-    );
-
-    let pkgbuild_contents = regex!("(?m)^pkgrel=.*$")
-        .replace(&pkgbuild_contents, NoExpand("pkgrel=1"))
-        .to_string();
-
-    // TODO: Update PKGBUILD source arrays with new sources (if provided by update provider)
-
-    // Write updated PKGBUILD
-    info!("Writing updated file");
-    fs::write(&pkgbuild_path, pkgbuild_contents)?;
+    update_pkgbuild(&pkgbuild_path, &latest_version, &update_data)?;
 
     // Use updpkgsums to update checksums in PKGBUILD
     if update_data.update_checksums {
-        let cmd_status = Command::new("updpkgsums")
-            .current_dir(manifest_path.parent().expect(
-                "How can there be no parent? We've been operating with files inside of it.",
-            ))
-            .status()?;
-
-        if !cmd_status.success() {
-            return Err(anyhow!("`updpkgsums` failed with exit status {cmd_status}"));
-        }
+        update_package_checksums(&manifest_path)?;
     }
 
-    // Commit changes using Git (and custom Bot user)
-    info!("Committing changes");
-    let cmd_status = Command::new("git")
-        .args(["add", &pkgbuild_path.to_string_lossy()])
-        .status()?;
+    commit_and_push_changes(
+        &pkgbuild_path,
+        &manifest.name,
+        &latest_version,
+        &branch_name,
+    )?;
 
-    if !cmd_status.success() {
-        return Err(anyhow!(
-            "`git add {}` failed with exit status {cmd_status}",
-            pkgbuild_path.to_string_lossy()
-        ));
-    }
-
-    let cmd_status = Command::new("git")
-        .args([
-            "commit",
-            "-m",
-            &format!("Update {} to {}", manifest.name, latest_version),
-        ])
-        .envs([
-            ("GIT_AUTHOR_NAME", "github-actions[bot]"),
-            (
-                "GIT_AUTHOR_EMAIL",
-                "41898282+github-actions[bot]@users.noreply.github.com",
-            ),
-            ("GIT_COMMITTER_NAME", "github-actions[bot]"),
-            (
-                "GIT_COMMITTER_EMAIL",
-                "41898282+github-actions[bot]@users.noreply.github.com",
-            ),
-            (
-                "EMAIL",
-                "41898282+github-actions[bot]@users.noreply.github.com",
-            ),
-        ])
-        .status()?;
-
-    if !cmd_status.success() {
-        return Err(anyhow!(
-            "`git commit -m \"Update {} to {latest_version}\"` failed with exit status {cmd_status}",
-            manifest.name
-        ));
-    }
-
-    info!("Pushing changes");
-    let cmd_status = Command::new("git")
-        .args(["push", "origin", &branch_name])
-        .status()?;
-
-    if !cmd_status.success() {
-        return Err(anyhow!(
-            "`git push origin {branch_name}` failed with exit status {cmd_status}"
-        ));
-    }
-
-    // TODO: Create a new pull request
-    info!("Opening PR");
+    open_new_pull_request()?;
 
     // Switch back to master branch
-    let cmd_status = Command::new("git").args(["checkout", "master"]).status()?;
-
-    if !cmd_status.success() {
-        return Err(anyhow!(
-            "`git checkout master` failed with exit status {cmd_status}"
-        ));
-    }
+    git_checkout_master()?;
 
     Ok(())
 }
@@ -228,20 +115,6 @@ fn output_gha_command<S: std::fmt::Display>(command: S, parameters: HashMap<S, S
     };
 
     println!("::{command}{param_str}::{value}");
-}
-
-fn get_version_from_pkgbuild(pkgbuild_path: &Path) -> anyhow::Result<String> {
-    let file_contents = fs::read_to_string(pkgbuild_path)?;
-
-    let re = regex!("^pkgver=(.*)$");
-
-    for line in file_contents.lines() {
-        if let Some(version_captures) = re.captures(line) {
-            return Ok(version_captures[1].to_string());
-        }
-    }
-
-    Err(anyhow!("did not find version in PKGBUILD"))
 }
 
 trait UpdateProvider {
