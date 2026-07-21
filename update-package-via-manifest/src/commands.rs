@@ -7,10 +7,10 @@ use anyhow::anyhow;
 
 macro_rules! validate_success {
     ($cmd_status:ident, $error:expr) => {
-        if !$cmd_status.success() {
-            return Err($error);
+        return if !$cmd_status.success() {
+            Err($error)
         } else {
-            return Ok(());
+            Ok(())
         }
     };
 }
@@ -75,7 +75,7 @@ pub fn git_commit_new_version(name: &str, latest_version: &str) -> anyhow::Resul
         .args([
             "commit",
             "-m",
-            &format!("Update {} to {}", name, latest_version),
+            &format!("Update {name} to {latest_version}"),
         ])
         .envs([
             ("GIT_AUTHOR_NAME", "github-actions[bot]"),

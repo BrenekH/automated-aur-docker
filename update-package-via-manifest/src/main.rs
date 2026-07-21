@@ -1,7 +1,8 @@
+#![warn(clippy::pedantic)]
+
 use std::{any::Any, collections::HashMap, fs, path::PathBuf};
 
 use anyhow::anyhow;
-use gha_main::{GitHubActionResult, gha_main, gha_output};
 use glob::glob;
 use serde::Deserialize;
 use tracing::info;
@@ -18,35 +19,32 @@ use crate::steps::{
 mod commands;
 mod steps;
 
-#[gha_main]
-fn main() -> GitHubActionResult {
+fn main() {
     // Find all packages in the pkgs directory (ie. pkgs/**/.aurmanifest.json)
     for entry in glob("./pkgs/**.aurmanifest.json").expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => {
                 output_gha_command(
                     "debug",
-                    HashMap::new(),
+                    &HashMap::new(),
                     &format!("Evaluating {}", path.display()),
                 );
 
-                handle_manifest(path).expect("Failed to handle manifest");
+                handle_manifest(&path).expect("Failed to handle manifest");
             }
-            Err(e) => println!("{:?}", e),
+            Err(e) => println!("{e:?}"),
         }
     }
-
-    Ok(())
 }
 
-fn handle_manifest(manifest_path: PathBuf) -> anyhow::Result<()> {
+fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
     let pkgbuild_path = manifest_path
         .parent()
         .map(|p| p.join("PKGBUILD"))
         .ok_or(anyhow!("Couldn't create PKGBUILD path"))?;
 
     // Parse manifest into a Manifest struct
-    let manifest_contents = fs::read_to_string(&manifest_path)?;
+    let manifest_contents = fs::read_to_string(manifest_path)?;
     let manifest: Manifest = serde_json::from_str(&manifest_contents)?;
 
     let Some(manifest_auto_updates) = manifest.automatic_updates else {
@@ -95,7 +93,7 @@ fn handle_manifest(manifest_path: PathBuf) -> anyhow::Result<()> {
 
     // Use updpkgsums to update checksums in PKGBUILD
     if update_data.update_checksums {
-        update_package_checksums(&manifest_path)?;
+        update_package_checksums(manifest_path)?;
     }
 
     commit_and_push_changes(
@@ -118,7 +116,7 @@ fn handle_manifest(manifest_path: PathBuf) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn output_gha_command<S: std::fmt::Display>(command: S, parameters: HashMap<S, S>, value: S) {
+fn output_gha_command<S: std::fmt::Display>(command: S, parameters: &HashMap<S, S>, value: S) {
     let formatted_params: Vec<String> = parameters
         .iter()
         .map(|(key, val)| format!("{key}={val}")) // TODO: Encode value (https://github.com/orgs/community/discussions/26736#discussioncomment-3253165)
