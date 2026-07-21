@@ -1,4 +1,4 @@
-//! Collection of functions which perform discrete steps of the automatic updating process. 
+//! Collection of functions which perform discrete steps of the automatic updating process.
 
 use std::{any::Any, fs, path::Path};
 
@@ -52,7 +52,7 @@ pub fn get_version_from_pkgbuild(pkgbuild_path: &Path) -> anyhow::Result<String>
 pub fn update_pkgbuild(
     pkgbuild_path: &Path,
     latest_version: &str,
-    _update_data: &UpdateData,
+    update_data: &UpdateData,
 ) -> anyhow::Result<()> {
     // Update PKGBUILD contents with new version (and reset pkgrel to 1)
     let pkgbuild_contents = fs::read_to_string(pkgbuild_path)?;
@@ -62,11 +62,64 @@ pub fn update_pkgbuild(
         NoExpand(&format!("pkgver={latest_version}")),
     );
 
-    let pkgbuild_contents = regex!("(?m)^pkgrel=.*$")
+    let mut pkgbuild_contents = regex!("(?m)^pkgrel=.*$")
         .replace(&pkgbuild_contents, NoExpand("pkgrel=1"))
         .to_string();
 
-    // TODO: Update PKGBUILD source arrays with new sources (if provided by update provider)
+    // Update PKGBUILD source arrays with new sources (if provided by update provider)
+    if let Some(source_array) = &update_data.source {
+        pkgbuild_contents = regex!(r"(?m)^source=\(.*\)$")
+            .replace(
+                &pkgbuild_contents,
+                NoExpand(&format!("source={}", vec_to_bash_array(source_array))),
+            )
+            .to_string();
+    }
+
+    if let Some(source_array) = &update_data.source_x86_64 {
+        pkgbuild_contents = regex!(r"(?m)^source_x86_64=\(.*\)$")
+            .replace(
+                &pkgbuild_contents,
+                NoExpand(&format!(
+                    "source_x86_64={}",
+                    vec_to_bash_array(source_array)
+                )),
+            )
+            .to_string();
+    }
+
+    if let Some(source_array) = &update_data.source_i686 {
+        pkgbuild_contents = regex!(r"(?m)^source_i686=\(.*\)$")
+            .replace(
+                &pkgbuild_contents,
+                NoExpand(&format!("source_i686={}", vec_to_bash_array(source_array))),
+            )
+            .to_string();
+    }
+
+    if let Some(source_array) = &update_data.source_aarch64 {
+        pkgbuild_contents = regex!(r"(?m)^source_aarch64=\(.*\)$")
+            .replace(
+                &pkgbuild_contents,
+                NoExpand(&format!(
+                    "source_aarch64={}",
+                    vec_to_bash_array(source_array)
+                )),
+            )
+            .to_string();
+    }
+
+    if let Some(source_array) = &update_data.source_armv7h {
+        pkgbuild_contents = regex!(r"(?m)^source_armv7h=\(.*\)$")
+            .replace(
+                &pkgbuild_contents,
+                NoExpand(&format!(
+                    "source_armv7h={}",
+                    vec_to_bash_array(source_array)
+                )),
+            )
+            .to_string();
+    }
 
     // Write updated PKGBUILD
     info!("Writing updated file");
@@ -94,4 +147,9 @@ pub fn commit_and_push_changes(
 pub fn open_new_pull_request() -> anyhow::Result<()> {
     info!("Opening PR");
     todo!()
+}
+
+fn vec_to_bash_array(v: &[String]) -> String {
+    let items: Vec<String> = v.iter().map(|s| format!("\"{s}\"")).collect();
+    format!("({})", items.join(" "))
 }
