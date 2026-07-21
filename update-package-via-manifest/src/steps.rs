@@ -49,6 +49,31 @@ pub fn get_version_from_pkgbuild(pkgbuild_path: &Path) -> anyhow::Result<String>
     Err(anyhow!("did not find version in PKGBUILD"))
 }
 
+macro_rules! update_source_array {
+    ($pkgbuild_contents:ident, $data:ident) => {
+        if let Some(source_array) = &$data {
+            $pkgbuild_contents = {
+                static REGEX: regex::__private::Lazy<regex::Regex> =
+                    regex::__private::Lazy::new(|| {
+                        regex::Regex::new(concat!("(?m)^", stringify!($data), r"=\(.*\)$"))
+                            .expect("invalid regex pattern")
+                    });
+                let re: &regex::Regex = &REGEX;
+                re
+            }
+            .replace(
+                &$pkgbuild_contents,
+                NoExpand(&format!(
+                    "{}={}",
+                    stringify!($data),
+                    vec_to_bash_array(source_array)
+                )),
+            )
+            .to_string();
+        }
+    };
+}
+
 pub fn update_pkgbuild(
     pkgbuild_path: &Path,
     latest_version: &str,
@@ -67,59 +92,17 @@ pub fn update_pkgbuild(
         .to_string();
 
     // Update PKGBUILD source arrays with new sources (if provided by update provider)
-    if let Some(source_array) = &update_data.source {
-        pkgbuild_contents = regex!(r"(?m)^source=\(.*\)$")
-            .replace(
-                &pkgbuild_contents,
-                NoExpand(&format!("source={}", vec_to_bash_array(source_array))),
-            )
-            .to_string();
-    }
+    let source = &update_data.source;
+    let source_x86_64 = &update_data.source_x86_64;
+    let source_i686 = &update_data.source_i686;
+    let source_aarch64 = &update_data.source_aarch64;
+    let source_armv7h = &update_data.source_armv7h;
 
-    if let Some(source_array) = &update_data.source_x86_64 {
-        pkgbuild_contents = regex!(r"(?m)^source_x86_64=\(.*\)$")
-            .replace(
-                &pkgbuild_contents,
-                NoExpand(&format!(
-                    "source_x86_64={}",
-                    vec_to_bash_array(source_array)
-                )),
-            )
-            .to_string();
-    }
-
-    if let Some(source_array) = &update_data.source_i686 {
-        pkgbuild_contents = regex!(r"(?m)^source_i686=\(.*\)$")
-            .replace(
-                &pkgbuild_contents,
-                NoExpand(&format!("source_i686={}", vec_to_bash_array(source_array))),
-            )
-            .to_string();
-    }
-
-    if let Some(source_array) = &update_data.source_aarch64 {
-        pkgbuild_contents = regex!(r"(?m)^source_aarch64=\(.*\)$")
-            .replace(
-                &pkgbuild_contents,
-                NoExpand(&format!(
-                    "source_aarch64={}",
-                    vec_to_bash_array(source_array)
-                )),
-            )
-            .to_string();
-    }
-
-    if let Some(source_array) = &update_data.source_armv7h {
-        pkgbuild_contents = regex!(r"(?m)^source_armv7h=\(.*\)$")
-            .replace(
-                &pkgbuild_contents,
-                NoExpand(&format!(
-                    "source_armv7h={}",
-                    vec_to_bash_array(source_array)
-                )),
-            )
-            .to_string();
-    }
+    update_source_array!(pkgbuild_contents, source);
+    update_source_array!(pkgbuild_contents, source_x86_64);
+    update_source_array!(pkgbuild_contents, source_i686);
+    update_source_array!(pkgbuild_contents, source_aarch64);
+    update_source_array!(pkgbuild_contents, source_armv7h);
 
     // Write updated PKGBUILD
     info!("Writing updated file");
