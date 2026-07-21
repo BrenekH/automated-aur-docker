@@ -8,8 +8,9 @@ use serde_json::json;
 use tracing::info;
 
 use crate::{
-    ManifestAutoUpdate, Test, Test2, UpdateData, UpdateProvider,
+    ManifestAutoUpdate, UpdateData, UpdateProvider,
     commands::{git_add_pkgbuild, git_commit_new_version, git_push_branch},
+    providers::{EquinoxProvider, GitHubReleasesProvider, GitHubTagsProvider},
 };
 
 pub fn extract_provider_and_data(
@@ -20,15 +21,15 @@ pub fn extract_provider_and_data(
 
     match manifest_auto_updates {
         ManifestAutoUpdate::GithubReleases(ghreleases_data) => {
-            update_provider = Box::new(Test {});
+            update_provider = Box::new(GitHubReleasesProvider::new());
             provider_data = Box::new(ghreleases_data);
         }
         ManifestAutoUpdate::GithubTags(ghtags_data) => {
-            update_provider = Box::new(Test2 {});
+            update_provider = Box::new(GitHubTagsProvider::new());
             provider_data = Box::new(ghtags_data);
         }
         ManifestAutoUpdate::Equinox(equinox_data) => {
-            update_provider = Box::new(Test {});
+            update_provider = Box::new(EquinoxProvider::new());
             provider_data = Box::new(equinox_data);
         }
     }
