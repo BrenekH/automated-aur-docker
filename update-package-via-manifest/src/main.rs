@@ -7,7 +7,8 @@ use serde::Deserialize;
 use tracing::info;
 
 use crate::commands::{
-    checkout_new_branch, ensure_folder_permissions, git_checkout_master, update_package_checksums,
+    checkout_new_branch, ensure_folder_permissions, get_remote_branches, git_checkout_master,
+    update_package_checksums,
 };
 use crate::steps::{
     commit_and_push_changes, extract_provider_and_data, get_version_from_pkgbuild,
@@ -67,7 +68,17 @@ fn handle_manifest(manifest_path: PathBuf) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    // TODO: Check if pull request/branch already exists for latest (new) version
+    // Check if pull request/branch already exists for latest (new) version
+    let remote_branches = get_remote_branches()?;
+    for line in remote_branches.lines() {
+        if line.contains(&format!("{}/{}", manifest.name, latest_version)) {
+            info!(
+                "Update for {}@{} has already been pushed",
+                manifest.name, latest_version
+            );
+            return Ok(());
+        }
+    }
 
     // Update perms so that the builder user owns everything (prevent git complaining about unsafe directory)
     ensure_folder_permissions()?;

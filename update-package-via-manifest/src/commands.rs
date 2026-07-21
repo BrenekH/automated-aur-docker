@@ -122,3 +122,18 @@ pub fn git_checkout_master() -> anyhow::Result<()> {
         anyhow!("`git checkout master` failed with exit status {cmd_status}")
     )
 }
+
+pub fn get_remote_branches() -> anyhow::Result<String> {
+    let cmd_output = Command::new("git")
+        .args(["ls-remote", "--heads", "origin"])
+        .output()?;
+
+    if !cmd_output.status.success() {
+        return Err(anyhow!(
+            "`git ls-remote --heads origin` failed with exit status {}",
+            cmd_output.status
+        ));
+    }
+
+    Ok(String::from_utf8(cmd_output.stdout)?)
+}
