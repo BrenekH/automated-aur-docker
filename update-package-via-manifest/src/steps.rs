@@ -66,7 +66,7 @@ macro_rules! update_source_array {
                 NoExpand(&format!(
                     "{}={}",
                     stringify!($data),
-                    vec_to_bash_array(source_array)
+                    slice_to_bash_array(source_array)
                 )),
             )
             .to_string();
@@ -132,7 +132,33 @@ pub fn open_new_pull_request() -> anyhow::Result<()> {
     todo!()
 }
 
-fn vec_to_bash_array(v: &[String]) -> String {
+/// Transforms a slice into a valid Bash array string.
+///
+/// ```rust
+/// let items = vec!("a".to_string(), "2".to_string());
+/// let bash_array = slice_to_bash_array(&items);
+///
+/// assert_eq!(bash_array, r#"("a" "2")"#);
+/// ```
+fn slice_to_bash_array(v: &[String]) -> String {
     let items: Vec<String> = v.iter().map(|s| format!("\"{s}\"")).collect();
     format!("({})", items.join(" "))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::steps::slice_to_bash_array;
+
+    #[test]
+    fn slice_to_bash_array_basic() {
+        let items = vec!["a".to_string(), "2".to_string()];
+        let bash_array = slice_to_bash_array(&items);
+
+        assert_eq!(bash_array, r#"("a" "2")"#);
+
+        let items = vec![];
+        let bash_array = slice_to_bash_array(&items);
+
+        assert_eq!(bash_array, "()");
+    }
 }
