@@ -1,6 +1,6 @@
 #![warn(clippy::pedantic)]
 
-use std::{any::Any, collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use anyhow::anyhow;
 use glob::glob;
@@ -11,7 +11,7 @@ use crate::commands::{
     checkout_new_branch, ensure_folder_permissions, get_remote_branches, git_checkout_master,
     update_package_checksums,
 };
-use crate::providers::{UpdateData, UpdateProvider};
+use crate::providers::{EquinoxData, GHReleasesData, GHTagsData, UpdateData, UpdateProvider};
 use crate::steps::{
     commit_and_push_changes, extract_provider_and_data, get_version_from_pkgbuild,
     open_new_pull_request, update_pkgbuild,
@@ -165,20 +165,4 @@ enum ManifestAutoUpdate {
     GithubReleases(GHReleasesData),
     GithubTags(GHTagsData),
     Equinox(EquinoxData),
-}
-
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct GHReleasesData {
-    repo: String,
-}
-
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct GHTagsData {
-    repo: String,
-}
-
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct EquinoxData {
-    app_id: String,
-    app_slug: String,
 }

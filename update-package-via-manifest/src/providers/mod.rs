@@ -4,16 +4,16 @@ mod equinox;
 mod github_releases;
 mod github_tags;
 
-pub use equinox::EquinoxProvider;
-pub use github_releases::GitHubReleasesProvider;
-pub use github_tags::GitHubTagsProvider;
+pub use equinox::{EquinoxData, EquinoxProvider};
+pub use github_releases::{GHReleasesData, GitHubReleasesProvider};
+pub use github_tags::{GHTagsData, GitHubTagsProvider};
 
 pub trait UpdateProvider {
     /// Returns the latest version available from the provider
-    fn latest_version(&self, manifest_data: &Box<dyn Any>) -> anyhow::Result<String>;
+    fn latest_version(&mut self, manifest_data: &Box<dyn Any>) -> anyhow::Result<String>;
 
     /// Generates [`UpdateData`]
-    fn get_update_data(&self, manifest_data: &Box<dyn Any>) -> anyhow::Result<UpdateData>;
+    fn get_update_data(&mut self, manifest_data: &Box<dyn Any>) -> anyhow::Result<UpdateData>;
 }
 
 /// Collection of data to use when creating the final update Pull Request.
