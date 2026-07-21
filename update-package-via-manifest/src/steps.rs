@@ -1,9 +1,10 @@
 //! Collection of functions which perform discrete steps of the automatic updating process.
 
-use std::{any::Any, fs, path::Path};
+use std::{any::Any, env, fs, path::Path};
 
 use anyhow::anyhow;
 use regex::{NoExpand, regex};
+use serde_json::json;
 use tracing::info;
 
 use crate::{
@@ -127,9 +128,36 @@ pub fn commit_and_push_changes(
     Ok(())
 }
 
-pub fn open_new_pull_request() -> anyhow::Result<()> {
+pub fn open_new_pull_request(
+    branch_name: &str,
+    package_name: &str,
+    version: &str,
+    pr_content: Option<&str>,
+) -> anyhow::Result<()> {
     info!("Opening PR");
-    todo!()
+
+    let pr_content = if let Some(c) = pr_content {
+        c.to_owned() + "\n\n"
+    } else {
+        String::new()
+    };
+
+    ureq::post("https://api.github.com/repos/BrenekH/automated-aur/pulls")
+        .header("Accept", "application/vnd.github+json")
+        .header(
+            "Authorization",
+            format!("Bearer {}", env::var("INPUT_GITHUB-TOKEN")?),
+        )
+        .header("X-GitHub-Api-Version", "2026-03-10")
+        .send_json(json!({
+            "head": branch_name,
+            "base": "master",
+            "maintainer_can_modify": true,
+            "title": format!("Update {package_name} to {version}"),
+            "body": pr_content + "_This PR was automatically opened by the [Automatic AUR system](https://github.com/BrenekH/automated-aur#README)._",
+        }))?;
+
+    Ok(())
 }
 
 /// Transforms a slice into a valid Bash array string.

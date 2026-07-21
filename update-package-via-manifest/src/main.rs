@@ -105,7 +105,12 @@ fn handle_manifest(manifest_path: PathBuf) -> anyhow::Result<()> {
         &branch_name,
     )?;
 
-    open_new_pull_request()?;
+    open_new_pull_request(
+        &branch_name,
+        &manifest.name,
+        &latest_version,
+        update_data.pr_content.as_deref(),
+    )?;
 
     // Switch back to master branch
     git_checkout_master()?;
