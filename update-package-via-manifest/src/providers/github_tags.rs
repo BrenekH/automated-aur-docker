@@ -1,7 +1,7 @@
 use std::{any::Any, env};
 
 use anyhow::anyhow;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::providers::{UpdateData, UpdateProvider};
 
@@ -76,7 +76,7 @@ impl GitHubTagsProvider {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct GHTagsData {
     pub repo: String,
 }

@@ -1,7 +1,7 @@
 use std::{any::Any, env};
 
 use anyhow::anyhow;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::providers::{UpdateData, UpdateProvider};
 
@@ -40,8 +40,7 @@ impl UpdateProvider for GitHubReleasesProvider {
 
         self.last_tag_html_link = response
             .get("html_url")
-            .map(|v| v.as_str().map(|s| s.to_string()))
-            .flatten();
+            .and_then(|v| v.as_str().map(ToString::to_string));
 
         let mut tag_name = response
             .get("tag_name")
@@ -78,7 +77,7 @@ impl GitHubReleasesProvider {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct GHReleasesData {
     pub repo: String,
 }
