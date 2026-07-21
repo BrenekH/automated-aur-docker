@@ -119,7 +119,18 @@ fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
 fn output_gha_command<S: std::fmt::Display>(command: S, parameters: &HashMap<S, S>, value: S) {
     let formatted_params: Vec<String> = parameters
         .iter()
-        .map(|(key, val)| format!("{key}={val}")) // TODO: Encode value (https://github.com/orgs/community/discussions/26736#discussioncomment-3253165)
+        .map(|(key, val)| {
+            format!(
+                "{key}={}",
+                // Encode value (https://github.com/orgs/community/discussions/26736#discussioncomment-3253165)
+                val.to_string()
+                    .replace('%', "%25")
+                    .replace('\r', "%0D")
+                    .replace('\n', "%0A")
+                    .replace(':', "%3A")
+                    .replace(',', "%2C")
+            )
+        })
         .collect();
 
     let param_str = if formatted_params.is_empty() {
@@ -128,7 +139,15 @@ fn output_gha_command<S: std::fmt::Display>(command: S, parameters: &HashMap<S, 
         formatted_params.join(",")
     };
 
-    println!("::{command}{param_str}::{value}");
+    println!(
+        "::{command}{param_str}::{}",
+        // Encode value (https://github.com/orgs/community/discussions/26736#discussioncomment-3253165)
+        value
+            .to_string()
+            .replace('%', "%25")
+            .replace('\r', "%0D")
+            .replace('\n', "%0A")
+    );
 }
 
 trait UpdateProvider {
