@@ -76,7 +76,6 @@ macro_rules! update_source_array {
     };
 }
 
-// TODO: Test
 pub fn update_pkgbuild<P: AsRef<Path>>(
     pkgbuild_path: P,
     latest_version: &str,
@@ -181,7 +180,10 @@ mod tests {
 
     use tempfile::NamedTempFile;
 
-    use crate::steps::{get_version_from_pkgbuild, slice_to_bash_array};
+    use crate::{
+        providers::UpdateData,
+        steps::{get_version_from_pkgbuild, slice_to_bash_array, update_pkgbuild},
+    };
 
     #[test]
     fn slice_to_bash_array_basic() {
@@ -223,5 +225,126 @@ package() {
         let actual_version =
             get_version_from_pkgbuild(&temp_filepath).expect("failed to get version");
         assert_eq!(actual_version, "3.39.9");
+    }
+
+    #[test]
+    fn update_pkgbuild_basic() {
+        let temp_filepath = NamedTempFile::new().expect("failed to get temporary file");
+
+        fs::write(
+            &temp_filepath,
+            r#"
+# Simplified Test PKGBUILD
+
+pkgname=ngrok
+pkgver=3.39.9
+pkgrel=5
+source_x86_64=("https://bin.equinox.io/a/5nBQH3CiRsa/ngrok-v3-3.39.9-linux-amd64.tar.gz")
+sha256sums_x86_64=('0b74db428f655944292cf6c554d35c8941faeccff87d5a6835152c7a08281ff0')
+
+package() {
+  cd "${srcdir}"
+  # Install the program.
+  install -Dm755 "ngrok" "${pkgdir}/usr/bin/ngrok"
+}
+"#,
+        )
+        .expect("failed to write test contents");
+
+        update_pkgbuild(&temp_filepath, "4.1.2", &UpdateData::default())
+            .expect("failed to update PKGBUILD");
+
+        assert_eq!(
+            fs::read_to_string(&temp_filepath).expect("couldn't read temp file"),
+            r#"
+# Simplified Test PKGBUILD
+
+pkgname=ngrok
+pkgver=4.1.2
+pkgrel=1
+source_x86_64=("https://bin.equinox.io/a/5nBQH3CiRsa/ngrok-v3-3.39.9-linux-amd64.tar.gz")
+sha256sums_x86_64=('0b74db428f655944292cf6c554d35c8941faeccff87d5a6835152c7a08281ff0')
+
+package() {
+  cd "${srcdir}"
+  # Install the program.
+  install -Dm755 "ngrok" "${pkgdir}/usr/bin/ngrok"
+}
+"#
+        );
+    }
+
+    #[test]
+    fn update_pkgbuild_with_sources() {
+        let temp_filepath = NamedTempFile::new().expect("failed to get temporary file");
+
+        fs::write(
+            &temp_filepath,
+            r#"
+# Simplified Test PKGBUILD
+
+pkgname=ngrok
+pkgver=3.39.9
+pkgrel=5
+source=("old")
+source_x86_64=("old2")
+source_i686=("old3")
+source_aarch64=("old4")
+source_armv7h=("old5")
+sha256sums=('checksum1')
+sha256sums_x86_64=('checksum2')
+sha256sums_i686=('checksum3')
+sha256sums_aarch64=('checksum4')
+sha256sums_armv7h=('checksum5')
+
+package() {
+  cd "${srcdir}"
+  # Install the program.
+  install -Dm755 "ngrok" "${pkgdir}/usr/bin/ngrok"
+}
+"#,
+        )
+        .expect("failed to write test contents");
+
+        update_pkgbuild(
+            &temp_filepath,
+            "4.1.2",
+            &UpdateData {
+                source: Some(vec!["new".into()]),
+                source_x86_64: Some(vec!["new2".into()]),
+                source_i686: Some(vec!["new3".into()]),
+                source_aarch64: Some(vec!["new4".into()]),
+                source_armv7h: Some(vec!["new5".into()]),
+                ..Default::default()
+            },
+        )
+        .expect("failed to update PKGBUILD");
+
+        assert_eq!(
+            fs::read_to_string(&temp_filepath).expect("couldn't read temp file"),
+            r#"
+# Simplified Test PKGBUILD
+
+pkgname=ngrok
+pkgver=4.1.2
+pkgrel=1
+source=("new")
+source_x86_64=("new2")
+source_i686=("new3")
+source_aarch64=("new4")
+source_armv7h=("new5")
+sha256sums=('checksum1')
+sha256sums_x86_64=('checksum2')
+sha256sums_i686=('checksum3')
+sha256sums_aarch64=('checksum4')
+sha256sums_armv7h=('checksum5')
+
+package() {
+  cd "${srcdir}"
+  # Install the program.
+  install -Dm755 "ngrok" "${pkgdir}/usr/bin/ngrok"
+}
+"#
+        );
     }
 }
