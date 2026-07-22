@@ -23,7 +23,7 @@ mod steps;
 
 fn main() {
     // Find all packages in the pkgs directory (ie. pkgs/**/.aurmanifest.json)
-    for entry in glob("./pkgs/**.aurmanifest.json").expect("Failed to read glob pattern") {
+    for entry in glob("./pkgs/**/.aurmanifest.json").expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => {
                 output_gha_command(
