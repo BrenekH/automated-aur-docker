@@ -37,7 +37,7 @@ pub fn extract_provider_and_data(
     (update_provider, provider_data)
 }
 
-pub fn get_version_from_pkgbuild(pkgbuild_path: &Path) -> anyhow::Result<String> {
+pub fn get_version_from_pkgbuild<P: AsRef<Path>>(pkgbuild_path: P) -> anyhow::Result<String> {
     let file_contents = fs::read_to_string(pkgbuild_path)?;
 
     let re = regex!("^pkgver=(.*)$");
@@ -76,13 +76,14 @@ macro_rules! update_source_array {
     };
 }
 
-pub fn update_pkgbuild(
-    pkgbuild_path: &Path,
+// TODO: Test
+pub fn update_pkgbuild<P: AsRef<Path>>(
+    pkgbuild_path: P,
     latest_version: &str,
     update_data: &UpdateData,
 ) -> anyhow::Result<()> {
     // Update PKGBUILD contents with new version (and reset pkgrel to 1)
-    let pkgbuild_contents = fs::read_to_string(pkgbuild_path)?;
+    let pkgbuild_contents = fs::read_to_string(&pkgbuild_path)?;
 
     let pkgbuild_contents = regex!("(?m)^pkgver=.*$").replace(
         &pkgbuild_contents,
@@ -108,7 +109,7 @@ pub fn update_pkgbuild(
 
     // Write updated PKGBUILD
     info!("Writing updated file");
-    fs::write(pkgbuild_path, pkgbuild_contents)?;
+    fs::write(&pkgbuild_path, pkgbuild_contents)?;
 
     Ok(())
 }
@@ -176,7 +177,11 @@ fn slice_to_bash_array(v: &[String]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::steps::slice_to_bash_array;
+    use std::fs;
+
+    use tempfile::NamedTempFile;
+
+    use crate::steps::{get_version_from_pkgbuild, slice_to_bash_array};
 
     #[test]
     fn slice_to_bash_array_basic() {
@@ -189,5 +194,34 @@ mod tests {
         let bash_array = slice_to_bash_array(&items);
 
         assert_eq!(bash_array, "()");
+    }
+
+    #[test]
+    fn get_pkg_version() {
+        let temp_filepath = NamedTempFile::new().expect("failed to get temporary file");
+
+        fs::write(
+            &temp_filepath,
+            r#"
+# Simplified Test PKGBUILD
+
+pkgname=ngrok
+pkgver=3.39.9
+pkgrel=1
+source_x86_64=("https://bin.equinox.io/a/5nBQH3CiRsa/ngrok-v3-3.39.9-linux-amd64.tar.gz")
+sha256sums_x86_64=('0b74db428f655944292cf6c554d35c8941faeccff87d5a6835152c7a08281ff0')
+
+package() {
+  cd "${srcdir}"
+  # Install the program.
+  install -Dm755 "ngrok" "${pkgdir}/usr/bin/ngrok"
+}
+"#,
+        )
+        .expect("failed to write test contents");
+
+        let actual_version =
+            get_version_from_pkgbuild(&temp_filepath).expect("failed to get version");
+        assert_eq!(actual_version, "3.39.9");
     }
 }
