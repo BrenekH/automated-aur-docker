@@ -31,6 +31,7 @@ fn main() {
                     &HashMap::new(),
                     &format!("Evaluating {}", path.display()),
                 );
+                info!("Evaluating {}", path.display());
 
                 handle_manifest(&path).expect("Failed to handle manifest");
             }
@@ -62,17 +63,25 @@ fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
     // Get latest version using specified update provider
     let latest_version = update_provider.latest_version(&provider_data)?;
     info!(pkgbuild_version, latest_version);
+    println!("PKGBUILD Version: {pkgbuild_version}, Latest Version: {latest_version}");
 
     // Return early if current (PKGBUILD) version and latest version are equal
     if pkgbuild_version == latest_version {
         return Ok(());
     }
 
+    // Update perms so that the builder user owns everything (prevent git complaining about unsafe directory)
+    ensure_folder_permissions()?;
+
     // Check if pull request/branch already exists for latest (new) version
     let remote_branches = get_remote_branches()?;
     for line in remote_branches.lines() {
         if line.contains(&format!("{}/{}", manifest.name, latest_version)) {
-            info!(
+            // info!(
+            //     "Update for {}@{} has already been pushed",
+            //     manifest.name, latest_version
+            // );
+            println!(
                 "Update for {}@{} has already been pushed",
                 manifest.name, latest_version
             );
@@ -80,15 +89,13 @@ fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
         }
     }
 
-    // Update perms so that the builder user owns everything (prevent git complaining about unsafe directory)
-    ensure_folder_permissions()?;
-
     // Retrieve PKGBUILD changes from update provider
     let update_data = update_provider.get_update_data(&provider_data)?;
 
     // Checkout Git to new branch (bot/{manifest.name}/{latest_version})
-    info!("Checkout out new branch");
+    // info!("Checkout out new branch");
     let branch_name = format!("bot/{}/{}", manifest.name, latest_version);
+    println!("Checkout out new branch: {branch_name}");
     checkout_new_branch(&branch_name)?;
 
     update_pkgbuild(&pkgbuild_path, &latest_version, &update_data)?;

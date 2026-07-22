@@ -108,6 +108,7 @@ pub fn update_pkgbuild<P: AsRef<Path>>(
 
     // Write updated PKGBUILD
     info!("Writing updated file");
+    println!("Writing updated file");
     fs::write(&pkgbuild_path, pkgbuild_contents)?;
 
     Ok(())
@@ -120,10 +121,12 @@ pub fn commit_and_push_changes(
     branch_name: &str,
 ) -> anyhow::Result<()> {
     info!("Committing changes");
+    println!("Committing changes");
     git_add_pkgbuild(pkgbuild_path)?;
     git_commit_new_version(manifest_name, latest_version)?;
 
     info!("Pushing changes");
+    println!("Pushing changes");
     git_push_branch(branch_name)?;
 
     Ok(())
@@ -136,6 +139,7 @@ pub fn open_new_pull_request(
     pr_content: Option<&str>,
 ) -> anyhow::Result<()> {
     info!("Opening PR");
+    println!("Opening PR");
 
     let pr_content = if let Some(c) = pr_content {
         c.to_owned() + "\n\n"

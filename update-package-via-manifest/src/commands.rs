@@ -129,6 +129,9 @@ pub fn get_remote_branches() -> anyhow::Result<String> {
         .output()?;
 
     if !cmd_output.status.success() {
+        eprintln!("Stdout:\n{}", String::from_utf8(cmd_output.stdout)?);
+        eprintln!("Stderr:\n{}", String::from_utf8(cmd_output.stderr)?);
+
         return Err(anyhow!(
             "`git ls-remote --heads origin` failed with exit status {}",
             cmd_output.status
