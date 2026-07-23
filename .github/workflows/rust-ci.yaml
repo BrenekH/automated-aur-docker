@@ -22,7 +22,7 @@ jobs:
 
     defaults:
       run:
-        working_directory: ./update-package-via-manifest
+        working-directory: ./update-package-via-manifest
 
     steps:
     - uses: actions/checkout@v7
