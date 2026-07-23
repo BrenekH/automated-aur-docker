@@ -5,12 +5,15 @@ use std::{collections::HashMap, fs, path::PathBuf};
 use anyhow::anyhow;
 use glob::glob;
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{debug, error, info, trace, warn};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::commands::{
     checkout_new_branch, ensure_folder_permissions, get_remote_branches, git_checkout_master,
     update_package_checksums,
 };
+use crate::gha_subscriber::GHALayer;
 use crate::providers::{EquinoxData, GHReleasesData, GHTagsData, UpdateData, UpdateProvider};
 use crate::steps::{
     commit_and_push_changes, extract_provider_and_data, get_version_from_pkgbuild,
@@ -18,10 +21,23 @@ use crate::steps::{
 };
 
 mod commands;
+mod gha_subscriber;
 mod providers;
 mod steps;
 
 fn main() {
+    tracing_subscriber::registry().with(GHALayer {}).init();
+    let update_data = UpdateData::default();
+    let string_field = "";
+
+    trace!(?update_data, string_field, "this is a trace");
+    debug!(?update_data, string_field, "this is a debug");
+    info!(?update_data, string_field, "this is an info");
+    warn!(?update_data, string_field, "this is a warning");
+    error!(?update_data, string_field, "this is an error");
+
+    info!(?update_data);
+
     // Find all packages in the pkgs directory (ie. pkgs/**/.aurmanifest.json)
     for entry in glob("./pkgs/**/.aurmanifest.json").expect("Failed to read glob pattern") {
         match entry {
@@ -31,7 +47,7 @@ fn main() {
                     &HashMap::new(),
                     &format!("Evaluating {}", path.display()),
                 );
-                info!("Evaluating {}", path.display());
+                println!("Evaluating {}", path.display());
 
                 handle_manifest(&path).expect("Failed to handle manifest");
             }
