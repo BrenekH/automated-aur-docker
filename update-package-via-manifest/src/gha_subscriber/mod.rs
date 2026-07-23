@@ -1,5 +1,3 @@
-// TODO: Write a subscriber/layer for tracing which maps the info!, debug!, warn!, and error!. Optionally allow groups to be defined by spans.
-
 use std::collections::HashMap;
 
 use tracing::{Event, Level, Subscriber};
@@ -16,29 +14,40 @@ impl<S: Subscriber> Layer<S> for GHALayer {
                 let mut visitor = Visitor::default();
                 event.record(&mut visitor);
 
-                // TODO: Print fields recorded by visitor as well
-                output_gha_command("debug", None::<&HashMap<&str, &str>>, &visitor.message);
+                output_gha_command(
+                    "debug",
+                    None::<&HashMap<&str, &str>>,
+                    combine_message_and_fields(visitor.message, &visitor.fields),
+                );
             }
             Level::INFO => {
                 let mut visitor = Visitor::default();
                 event.record(&mut visitor);
 
-                // TODO: Print fields recorded by visitor as well
-                println!("{}", visitor.message);
+                println!(
+                    "{}",
+                    combine_message_and_fields(visitor.message, &visitor.fields),
+                );
             }
             Level::WARN => {
                 let mut visitor = FileContextVisitor::default();
                 event.record(&mut visitor);
 
-                // TODO: Print misc fields recorded by visitor as well
-                output_gha_command("warning", Some(&visitor.parameters), &visitor.message);
+                output_gha_command(
+                    "warning",
+                    Some(&visitor.parameters),
+                    combine_message_and_fields(visitor.message, &visitor.fields),
+                );
             }
             Level::ERROR => {
                 let mut visitor = FileContextVisitor::default();
                 event.record(&mut visitor);
 
-                // TODO: Print misc fields recorded by visitor as well
-                output_gha_command("error", Some(&visitor.parameters), &visitor.message);
+                output_gha_command(
+                    "error",
+                    Some(&visitor.parameters),
+                    combine_message_and_fields(visitor.message, &visitor.fields),
+                );
             }
         }
     }
@@ -94,7 +103,7 @@ impl tracing::field::Visit for FileContextVisitor {
                 self.parameters.insert(field.name(), value.to_owned());
             }
             _ => {
-                self.fields.push((field.name(), value.to_owned()));
+                self.record_debug(field, &value);
             }
         }
     }
@@ -140,4 +149,25 @@ fn output_gha_command(
             .replace('\r', "%0D")
             .replace('\n', "%0A")
     );
+}
+
+fn combine_message_and_fields(message: String, fields: &Vec<(&'static str, String)>) -> String {
+    let mut final_string = message;
+
+    if !fields.is_empty() {
+        final_string += " {";
+    }
+
+    for (name, value) in fields {
+        final_string += name;
+        final_string += " = ";
+        final_string += value;
+        final_string += " ";
+    }
+
+    if !fields.is_empty() {
+        final_string += "}";
+    }
+
+    final_string
 }
