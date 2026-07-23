@@ -29,14 +29,16 @@ fn main() {
     tracing_subscriber::registry().with(GHALayer {}).init();
     let update_data = UpdateData::default();
     let string_field = "";
+    let heap_string = "heap string".to_string();
 
     trace!(?update_data, string_field, "this is a trace");
     debug!(?update_data, string_field, "this is a debug");
     info!(?update_data, string_field, "this is an info");
-    warn!(?update_data, string_field, "this is a warning");
-    error!(?update_data, string_field, "this is an error");
+    warn!(?update_data, string_field, title=heap_string, "this is a warning");
+    error!(?update_data, string_field, file="main.rs", "this is an error");
 
-    info!(?update_data);
+    info!(?update_data, heap_string);
+    debug!(?update_data, "format me: {}", "hello there");
 
     // Find all packages in the pkgs directory (ie. pkgs/**/.aurmanifest.json)
     for entry in glob("./pkgs/**/.aurmanifest.json").expect("Failed to read glob pattern") {
