@@ -1,0 +1,60 @@
+name: Build, Test, and Lint Rust Code
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+defaults:
+  run:
+    working-directory: ./update-package-via-manifest
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: "update-package-via-manifest"
+        # Allow cache to be shared between jobs
+        add-job-id-key: "false"
+        add-rust-environment-hash-key: "false"
+
+    - name: Build
+      run: cargo build --verbose
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: "update-package-via-manifest"
+        # Allow cache to be shared between jobs
+        add-job-id-key: "false"
+        add-rust-environment-hash-key: "false"
+
+    - name: Test
+      run: cargo test --verbose
+
+  clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: "update-package-via-manifest"
+        # Allow cache to be shared between jobs
+        add-job-id-key: "false"
+        add-rust-environment-hash-key: "false"
+
+    - name: Clippy
+      run: cargo clippy
