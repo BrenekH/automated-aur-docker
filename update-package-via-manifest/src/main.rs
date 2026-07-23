@@ -1,11 +1,12 @@
 #![warn(clippy::pedantic)]
 
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{fs, path::PathBuf};
 
 use anyhow::anyhow;
 use glob::glob;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, trace, warn};
+use tracing::level_filters::LevelFilter;
+use tracing::{debug, error, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -26,34 +27,22 @@ mod providers;
 mod steps;
 
 fn main() {
-    tracing_subscriber::registry().with(GHALayer {}).init();
-    let update_data = UpdateData::default();
-    let string_field = "";
-    let heap_string = "heap string".to_string();
-
-    trace!(?update_data, string_field, "this is a trace");
-    debug!(?update_data, string_field, "this is a debug");
-    info!(?update_data, string_field, "this is an info");
-    warn!(?update_data, string_field, title=heap_string, "this is a warning");
-    error!(?update_data, string_field, file="main.rs", "this is an error");
-
-    info!(?update_data, heap_string);
-    debug!(?update_data, "format me: {}", "hello there");
+    tracing_subscriber::registry()
+        .with(GHALayer {})
+        .with(LevelFilter::DEBUG)
+        .init();
 
     // Find all packages in the pkgs directory (ie. pkgs/**/.aurmanifest.json)
     for entry in glob("./pkgs/**/.aurmanifest.json").expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => {
-                output_gha_command(
-                    "debug",
-                    &HashMap::new(),
-                    &format!("Evaluating {}", path.display()),
-                );
-                println!("Evaluating {}", path.display());
+                debug!("Evaluating {}", path.display());
 
-                handle_manifest(&path).expect("Failed to handle manifest");
+                if let Err(e) = handle_manifest(&path) {
+                    error!(path=%path.display(), error=%e, title="Failed to handle manifest", "error while handling manifest");
+                }
             }
-            Err(e) => println!("{e:?}"),
+            Err(e) => error!(error=%e, "glob entry produced error"),
         }
     }
 }
@@ -72,6 +61,8 @@ fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
         return Ok(());
     };
 
+    info!("Checking for updates for {}", manifest.name);
+
     // Create UpdateProvider
     let (mut update_provider, provider_data) = extract_provider_and_data(manifest_auto_updates);
 
@@ -80,8 +71,10 @@ fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
 
     // Get latest version using specified update provider
     let latest_version = update_provider.latest_version(&provider_data)?;
-    info!(pkgbuild_version, latest_version);
-    println!("PKGBUILD Version: {pkgbuild_version}, Latest Version: {latest_version}");
+    info!(
+        "PKGBUILD Version" = pkgbuild_version,
+        "Latest Version" = latest_version
+    );
 
     // Return early if current (PKGBUILD) version and latest version are equal
     if pkgbuild_version == latest_version {
@@ -95,11 +88,7 @@ fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
     let remote_branches = get_remote_branches()?;
     for line in remote_branches.lines() {
         if line.contains(&format!("{}/{}", manifest.name, latest_version)) {
-            // info!(
-            //     "Update for {}@{} has already been pushed",
-            //     manifest.name, latest_version
-            // );
-            println!(
+            info!(
                 "Update for {}@{} has already been pushed",
                 manifest.name, latest_version
             );
@@ -111,9 +100,8 @@ fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
     let update_data = update_provider.get_update_data(&provider_data)?;
 
     // Checkout Git to new branch (bot/{manifest.name}/{latest_version})
-    // info!("Checkout out new branch");
     let branch_name = format!("bot/{}/{}", manifest.name, latest_version);
-    println!("Checkout out new branch: {branch_name}");
+    info!(branch_name, "Checking out new branch");
     checkout_new_branch(&branch_name)?;
 
     update_pkgbuild(&pkgbuild_path, &latest_version, &update_data)?;
@@ -141,40 +129,6 @@ fn handle_manifest(manifest_path: &PathBuf) -> anyhow::Result<()> {
     git_checkout_master()?;
 
     Ok(())
-}
-
-fn output_gha_command<S: std::fmt::Display>(command: S, parameters: &HashMap<S, S>, value: S) {
-    let formatted_params: Vec<String> = parameters
-        .iter()
-        .map(|(key, val)| {
-            format!(
-                "{key}={}",
-                // Encode value (https://github.com/orgs/community/discussions/26736#discussioncomment-3253165)
-                val.to_string()
-                    .replace('%', "%25")
-                    .replace('\r', "%0D")
-                    .replace('\n', "%0A")
-                    .replace(':', "%3A")
-                    .replace(',', "%2C")
-            )
-        })
-        .collect();
-
-    let param_str = if formatted_params.is_empty() {
-        String::new()
-    } else {
-        formatted_params.join(",")
-    };
-
-    println!(
-        "::{command}{param_str}::{}",
-        // Encode value (https://github.com/orgs/community/discussions/26736#discussioncomment-3253165)
-        value
-            .to_string()
-            .replace('%', "%25")
-            .replace('\r', "%0D")
-            .replace('\n', "%0A")
-    );
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
