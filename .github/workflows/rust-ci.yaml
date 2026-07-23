@@ -56,5 +56,5 @@ jobs:
         add-job-id-key: "false"
         add-rust-environment-hash-key: "false"
 
-    - name: Test
+    - name: Clippy
       run: cargo clippy
