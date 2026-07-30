@@ -4,9 +4,9 @@ mod equinox;
 mod github_releases;
 mod github_tags;
 
-pub use equinox::{EquinoxData, EquinoxProvider};
-pub use github_releases::{GHReleasesData, GitHubReleasesProvider};
-pub use github_tags::{GHTagsData, GitHubTagsProvider};
+pub use equinox::EquinoxProvider;
+pub use github_releases::GitHubReleasesProvider;
+pub use github_tags::GitHubTagsProvider;
 
 pub trait UpdateProvider {
     /// Returns the latest version available from the provider

@@ -1,8 +1,9 @@
 use std::{any::Any, collections::HashMap};
 
 use anyhow::anyhow;
+use common::EquinoxData;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 
 use crate::providers::{UpdateData, UpdateProvider};
@@ -94,14 +95,6 @@ impl EquinoxProvider {
             .map(|x| x.as_str().to_string())
             .collect())
     }
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EquinoxData {
-    #[serde(rename = "appID")]
-    pub app_id: String,
-    #[serde(rename = "appSlug")]
-    pub app_slug: String,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
