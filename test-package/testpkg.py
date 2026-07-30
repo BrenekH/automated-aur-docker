@@ -33,13 +33,6 @@ def test(pkg_dir_str: str) -> Tuple[str, bool]:
 
 	return check_results, testCmd_proc.returncode != 0 if testCmd != None else False
 
-def copy_files_to_dir(files: List[Path], dir: Path):
-	for f in files:
-		if f.is_absolute():
-			print(f"{f} is an absolute Path. It will not be copied.")
-			continue
-		shutil.copy(f, dir / f.name)
-
 def set_output(name: str, value: str | bool):
 	outputEnvVar = os.getenv("GITHUB_OUTPUT")
 	if outputEnvVar == None:
