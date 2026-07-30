@@ -1,7 +1,7 @@
 use std::{any::Any, env};
 
 use anyhow::anyhow;
-use serde::{Deserialize, Serialize};
+use common::GHReleasesData;
 
 use crate::providers::{UpdateData, UpdateProvider};
 
@@ -75,9 +75,4 @@ impl GitHubReleasesProvider {
             last_tag_html_link: None,
         }
     }
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct GHReleasesData {
-    pub repo: String,
 }

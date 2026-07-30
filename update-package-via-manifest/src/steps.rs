@@ -3,12 +3,13 @@
 use std::{any::Any, env, fs, path::Path};
 
 use anyhow::anyhow;
+use common::ManifestAutoUpdate;
 use regex::{NoExpand, regex};
 use serde_json::json;
 use tracing::info;
 
 use crate::{
-    ManifestAutoUpdate, UpdateData, UpdateProvider,
+    UpdateData, UpdateProvider,
     commands::{git_add_pkgbuild, git_commit_new_version, git_push_branch},
     providers::{EquinoxProvider, GitHubReleasesProvider, GitHubTagsProvider},
 };

@@ -1,7 +1,8 @@
 use std::{any::Any, env};
 
 use anyhow::anyhow;
-use serde::{Deserialize, Serialize};
+use common::GHTagsData;
+use serde::Deserialize;
 
 use crate::providers::{UpdateData, UpdateProvider};
 
@@ -74,11 +75,6 @@ impl GitHubTagsProvider {
             last_tag_html_link: None,
         }
     }
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct GHTagsData {
-    pub repo: String,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
