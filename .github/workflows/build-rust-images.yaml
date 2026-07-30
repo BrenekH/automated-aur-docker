@@ -1,4 +1,6 @@
-name: Build and Push Docker Images
+name: Build and Push Docker Images (Rust)
+# Eventually the docker image workflows will be reunited,
+# but for right now all of the Rust-based images need the root context for Cargo Workspaces.
 
 on:
   schedule:
@@ -17,13 +19,9 @@ jobs:
     strategy:
       matrix:
         subfolder:
-          - "build-package"
-          - "test-package"
-          - "publish-package"
+          - "update-package-via-manifest"
 
     steps:
-      - uses: actions/checkout@v7
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
@@ -40,6 +38,6 @@ jobs:
       - name: Build and push container images/tags
         uses: docker/build-push-action@v7
         with:
-          context: ./${{ matrix.subfolder }}
+          file: ./${{ matrix.subfolder }}/Dockerfile
           push: true
           tags: ghcr.io/brenekh/auto-aur-${{ matrix.subfolder }}:latest

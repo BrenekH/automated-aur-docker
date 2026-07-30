@@ -2,15 +2,14 @@ FROM docker.io/lukemathwalker/cargo-chef:latest AS chef
 WORKDIR /app
 
 FROM chef AS planner
-COPY ./Cargo.toml ./Cargo.lock ./
-COPY ./src ./src
-RUN cargo chef prepare
+COPY . .
+RUN cargo chef prepare --bin update-package-via-manifest
 
 FROM chef AS builder
 COPY --from=planner /app/recipe.json .
-RUN cargo chef cook --release
-COPY ./ .
-RUN cargo build --release
+RUN cargo chef cook --release --bin update-package-via-manifest
+COPY . .
+RUN cargo build --release --bin update-package-via-manifest
 
 FROM archlinux/archlinux:base-devel
 
