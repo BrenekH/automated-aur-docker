@@ -1,9 +1,9 @@
-use std::{env, fs, path::Path};
+use std::{env, fs, path::Path, process::exit};
 
 use anyhow::anyhow;
 use regex::{RegexSet, regex};
 use serde::Deserialize;
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 
 use common::Manifest;
 
@@ -15,51 +15,58 @@ use crate::commands::{
 mod commands;
 
 pub fn publish(package_dir: impl AsRef<Path>) {
+    match publish_result(package_dir) {
+        Ok(_) => {}
+        Err(e) => {
+            error!("{e}");
+            exit(1);
+        }
+    }
+}
+
+fn publish_result(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
     // Read manifest
     let manifest_path = package_dir.as_ref().join(".aurmanifest.json");
     debug!(?manifest_path);
 
-    let manifest_contents = fs::read_to_string(manifest_path).unwrap();
+    let manifest_contents = fs::read_to_string(manifest_path)?;
     debug!(manifest_contents);
-    let manifest: Manifest = serde_json::from_str(&manifest_contents).unwrap();
+    let manifest: Manifest = serde_json::from_str(&manifest_contents)?;
 
-    let temp_dir = tempfile::tempdir().unwrap();
+    let temp_dir = tempfile::tempdir()?;
     let repo_path = temp_dir.path();
 
     info!("Cloning AUR repo");
-    clone_aur_repo(&manifest.name, repo_path).unwrap();
+    clone_aur_repo(&manifest.name, repo_path)?;
 
     info!("Setting up git config");
-    set_local_git_config("user.name", "BrenekH Automated AUR", repo_path).unwrap();
+    set_local_git_config("user.name", "BrenekH Automated AUR", repo_path)?;
     set_local_git_config(
         "user.email",
         "brenekharrison+automatedaur@gmail.com",
         repo_path,
-    )
-    .unwrap();
+    )?;
 
     info!("Copying PKGBUILD and included files to git repo");
-    ["PKGBUILD".to_string()]
+    for filename in ["PKGBUILD".to_string()]
         .iter()
         .chain(manifest.include.iter())
-        .for_each(|filename| {
-            fs::copy(
-                package_dir.as_ref().join(filename),
-                repo_path.join(filename),
-            )
-            .unwrap();
-        });
+    {
+        fs::copy(
+            package_dir.as_ref().join(filename),
+            repo_path.join(filename),
+        )?;
+    }
 
     info!("Creating .SRCINFO");
-    generate_srcinfo(repo_path).unwrap();
+    generate_srcinfo(repo_path)?;
 
     // Write out proper .gitignore file (useful for new packages not yet uploaded).
     info!("Writing .gitignore");
     fs::write(
         repo_path.join(".gitignore"),
         "# Require every item to be force added\n*",
-    )
-    .unwrap();
+    )?;
 
     // Force-add all modified files to the repo (if .gitignore hasn't changed, force-adding it won't break anything, so it's hardcoded in)
     info!("Adding files");
@@ -69,21 +76,20 @@ pub fn publish(package_dir: impl AsRef<Path>) {
             .map(|f| f.to_string())
             .chain(manifest.include),
         repo_path,
-    )
-    .unwrap();
+    )?;
 
     info!("Committing");
     git_commit(
-        generate_commit_message(repo_path)
-            .unwrap()
+        generate_commit_message(repo_path)?
             .iter()
             .map(|m| m.to_string()),
         repo_path,
-    )
-    .unwrap();
+    )?;
 
     info!("Pushing to AUR");
-    git_push(repo_path).unwrap();
+    git_push(repo_path)?;
+
+    Ok(())
 }
 
 /// Create a commit message based on the PR information and changed files.
