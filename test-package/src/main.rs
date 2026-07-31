@@ -17,18 +17,18 @@ fn main() -> GitHubActionResult {
 
     let args: Vec<String> = env::args().collect();
 
-    let result;
+    let output;
     let failed;
     match test_package(
-        args.first()
+        args.get(1)
             .expect("Package directory must be first argument"),
     ) {
         Ok(o) => {
-            result = o;
+            output = o;
             failed = false;
         }
         Err(TestPkgError::Cmd { output: o }) => {
-            result = o;
+            output = o;
             failed = true;
         }
         Err(TestPkgError::Io(e)) => {
@@ -40,8 +40,9 @@ fn main() -> GitHubActionResult {
     }
 
     if args.contains(&"--normal".to_string()) {
-        println!("{result}\n\nFailed: {failed}");
+        println!("{output}\n\nFailed: {failed}");
     } else {
+        let result = output.replace('\n', "\\n").replace('"', "\\\"");
         gha_output!(result);
         gha_output!(failed);
 

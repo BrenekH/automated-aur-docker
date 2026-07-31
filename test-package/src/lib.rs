@@ -5,7 +5,7 @@ use std::{
 };
 
 use common::Manifest;
-use tracing::info;
+use tracing::{debug, info};
 
 #[derive(thiserror::Error, Debug)]
 pub enum TestPkgError {
@@ -21,8 +21,10 @@ pub enum TestPkgError {
 pub fn test_package(package_dir: impl AsRef<Path>) -> Result<String, TestPkgError> {
     // Read manifest
     let manifest_path = package_dir.as_ref().join(".aurmanifest.json");
+    debug!(?manifest_path);
 
     let manifest_contents = fs::read_to_string(manifest_path)?;
+    debug!(manifest_contents);
     let manifest: Manifest = serde_json::from_str(&manifest_contents)?;
 
     // If test command is None, exit early
@@ -43,10 +45,14 @@ pub fn test_package(package_dir: impl AsRef<Path>) -> Result<String, TestPkgErro
 
     // Format results
     let results_string = format!(
-        "## Test Command:\n### Stdout:\n```{}\n```\n### Stderr:\n```\n{}\n```\n",
+        "## Test Command:\n### Stdout:\n```\n{}\n```\n### Stderr:\n```\n{}\n```\n",
         String::from_utf8_lossy(&cmd_output.stdout),
         String::from_utf8_lossy(&cmd_output.stderr),
     );
+
+    if cmd_output.status.success() {
+        return Ok(results_string);
+    }
 
     Err(TestPkgError::Cmd {
         output: results_string,
