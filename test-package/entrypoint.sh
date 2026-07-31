@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 pacman -Syu
 
@@ -9,4 +10,4 @@ pacman -Syu
 pacman -Udd --noconfirm $GITHUB_WORKSPACE/*.pkg.tar.zst
 pacman -U --noconfirm $GITHUB_WORKSPACE/*.pkg.tar.zst
 
-python -u /testpkg.py "$@"
+/test-package "$@"
