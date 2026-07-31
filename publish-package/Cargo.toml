@@ -5,11 +5,11 @@ edition = "2024"
 
 [dependencies]
 anyhow.workspace = true
-common = { version = "0.1.0", path = "../common" }
-itertools = "0.15.0"
-regex = "1.13.1"
-serde = "1.0.229"
+common.path = "../common"
+itertools.workspace = true
+regex.workspace = true
+serde.workspace = true
 serde_json.workspace = true
-tempfile = "3.27.0"
-tracing = "0.1.44"
-tracing-subscriber = "0.3.23"
+tempfile.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
