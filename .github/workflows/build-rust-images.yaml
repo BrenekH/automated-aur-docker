@@ -19,6 +19,7 @@ jobs:
     strategy:
       matrix:
         subfolder:
+          - "test-package"
           - "update-package-via-manifest"
 
     steps:
