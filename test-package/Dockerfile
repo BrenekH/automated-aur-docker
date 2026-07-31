@@ -13,7 +13,7 @@ RUN cargo build --release --bin test-package
 
 FROM archlinux/archlinux:base
 
-COPY entrypoint.sh /
+COPY test-package/entrypoint.sh /
 
 RUN pacman -Syu --noconfirm &&\
  chmod +x /entrypoint.sh

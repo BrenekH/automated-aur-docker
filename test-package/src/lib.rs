@@ -5,6 +5,7 @@ use std::{
 };
 
 use common::Manifest;
+use tracing::info;
 
 #[derive(thiserror::Error, Debug)]
 pub enum TestPkgError {
@@ -30,6 +31,7 @@ pub fn test_package(package_dir: impl AsRef<Path>) -> Result<String, TestPkgErro
     };
 
     // Run test command
+    info!(command = test_cmd, "Running test command");
     let cmd = Command::new("bash")
         .arg("-c")
         .arg(&test_cmd)
