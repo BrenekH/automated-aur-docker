@@ -20,6 +20,7 @@ jobs:
       matrix:
         subfolder:
           - "test-package"
+          - "publish-package"
           - "update-package-via-manifest"
 
     steps:

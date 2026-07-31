@@ -18,7 +18,6 @@ jobs:
       matrix:
         subfolder:
           - "build-package"
-          - "publish-package"
 
     steps:
       - uses: actions/checkout@v7
