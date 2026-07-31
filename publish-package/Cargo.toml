@@ -7,6 +7,8 @@ edition = "2024"
 anyhow.workspace = true
 common = { version = "0.1.0", path = "../common" }
 itertools = "0.15.0"
+regex = "1.13.1"
+serde = "1.0.229"
 serde_json.workspace = true
 tempfile = "3.27.0"
 tracing = "0.1.44"

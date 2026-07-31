@@ -1,10 +1,15 @@
-use std::{fs, path::Path};
+use std::{env, fs, path::Path};
 
-use common::Manifest;
+use anyhow::anyhow;
+use regex::{RegexSet, regex};
+use serde::Deserialize;
 use tracing::{debug, info};
 
+use common::Manifest;
+
 use crate::commands::{
-    clone_aur_repo, generate_srcinfo, git_add_files, git_commit, git_push, set_local_git_config
+    clone_aur_repo, generate_srcinfo, git_add_files, git_commit, git_modified_files, git_push,
+    pkgbuild_diff, set_local_git_config,
 };
 
 mod commands;
@@ -33,8 +38,17 @@ pub fn publish(package_dir: impl AsRef<Path>) {
     )
     .unwrap();
 
-    // TODO: Copy PKGBUILD and manifest.include files to cloned repo
-    info!("Copying files to git repo");
+    info!("Copying PKGBUILD and included files to git repo");
+    ["PKGBUILD".to_string()]
+        .iter()
+        .chain(manifest.include.iter())
+        .for_each(|filename| {
+            fs::copy(
+                package_dir.as_ref().join(filename),
+                repo_path.join(filename),
+            )
+            .unwrap();
+        });
 
     info!("Creating .SRCINFO");
     generate_srcinfo(repo_path).unwrap();
@@ -58,14 +72,89 @@ pub fn publish(package_dir: impl AsRef<Path>) {
     )
     .unwrap();
 
-    // TODO: Commit files to cloned repo
     info!("Committing");
     git_commit(
-        ["TODO", "REPLACE ME"].iter().map(|m| m.to_string()),
+        generate_commit_message(repo_path)
+            .unwrap()
+            .iter()
+            .map(|m| m.to_string()),
         repo_path,
     )
     .unwrap();
 
     info!("Pushing to AUR");
     git_push(repo_path).unwrap();
+}
+
+/// Create a commit message based on the PR information and changed files.
+fn generate_commit_message(git_repo_dir: impl AsRef<Path>) -> anyhow::Result<Vec<String>> {
+    let event_filepath = env::var("GITHUB_EVENT_PATH")?;
+    let file_data = fs::read_to_string(event_filepath)?;
+    let github_event: GithubEvent = serde_json::from_str(&file_data)?;
+    let pr_title = github_event.pull_request.title;
+    let pr_num = github_event.pull_request.number;
+
+    let bot_commit_msg = format!(
+        "Automatically committed from https://github.com/BrenekH/automated-aur/pull/{pr_num}."
+    );
+
+    let changed_files_str = git_modified_files(&git_repo_dir)?;
+
+    if pr_title.starts_with("Update")
+        && changed_files_str.contains("PKGBUILD")
+        && let Ok(message) = upstream_update_commit_msg(&git_repo_dir, &bot_commit_msg)
+    {
+        return Ok(message);
+    }
+
+    Ok(vec![pr_title, bot_commit_msg])
+}
+
+/// Creates a commit message of the format `Update to pkgver-1` when the changes
+/// are a version bump because upstream updated.
+fn upstream_update_commit_msg(
+    git_repo_dir: impl AsRef<Path>,
+    bot_commit_msg: &str,
+) -> anyhow::Result<Vec<String>> {
+    let pkgbuild_diff = pkgbuild_diff(&git_repo_dir)?;
+
+    let set = RegexSet::new([r"-pkgver=.*\n+pkgver=.*", r"-pkgrel=.*\n+pkgrel=.*"])?;
+
+    if !set.is_match(&pkgbuild_diff) {
+        return Err(anyhow!("pkgver and pkgrel don't have pending changes"));
+    }
+
+    let pkgbuild_contents = fs::read_to_string(git_repo_dir.as_ref().join("PKGBUILD"))?;
+
+    let Some(captures) = regex!(r"pkgver=(.*)").captures(&pkgbuild_contents) else {
+        return Err(anyhow!("couldn't find pkgver"));
+    };
+    let pkgver = &captures[1];
+
+    let Some(captures) = regex!(r"pkgrel=(.*)").captures(&pkgbuild_contents) else {
+        return Err(anyhow!("couldn't find pkgrel"));
+    };
+    let pkgrel = &captures[1];
+
+    // If the pkgrel was bumped higher than one, then we'd rather the PR title be
+    // the commit message, because it was a packaging change, not a simple update bump.
+    if pkgrel == "1" {
+        Ok(vec![
+            format!("Update to {pkgver}-{pkgrel}"),
+            bot_commit_msg.to_string(),
+        ])
+    } else {
+        Err(anyhow!("pkgrel updated to value >= 2"))
+    }
+}
+
+#[derive(Deserialize, Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct GithubEvent {
+    pull_request: GHEventPR,
+}
+
+#[derive(Deserialize, Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct GHEventPR {
+    title: String,
+    number: usize,
 }
