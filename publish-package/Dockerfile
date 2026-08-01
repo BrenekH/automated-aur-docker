@@ -19,7 +19,7 @@ RUN pacman -Syu --noconfirm --needed sudo git openssh &&\
 	useradd builder -m &&\
 	passwd -d builder &&\
 	printf 'builder ALL=(ALL) ALL\n' | tee -a /etc/sudoers &&\
-	chmod +x /publishpkg.py /entrypoint.sh
+	chmod +x /entrypoint.sh
 
 COPY --from=builder /app/target/release/publish-package /publish-package
 
