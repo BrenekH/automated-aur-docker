@@ -9,4 +9,4 @@ echo "$2" > /home/builder/.ssh/aur_key
 chmod 600 /home/builder/.ssh/aur_key
 export GIT_SSH_COMMAND="ssh -i /home/builder/.ssh/aur_key"
 
-python -u /publishpkg.py "$1"
+/publish-package "$1"

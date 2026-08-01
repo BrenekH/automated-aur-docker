@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-common = { path = "../common" }
-anyhow = "1.0.104"
-gha = "0.1.8"
-glob = "0.3.3"
-regex = "1.13.1"
-serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.150"
-tracing = "0.1.44"
-tracing-subscriber = "0.3.23"
-ureq = { version = "3.3.0", features = ["json"] }
+anyhow.workspace = true
+common.path = "../common"
+gha.workspace = true
+glob.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+ureq.workspace = true
 
 [dev-dependencies]
-tempfile = "3.27.0"
+tempfile.workspace = true
