@@ -1,4 +1,6 @@
-FROM docker.io/lukemathwalker/cargo-chef:latest AS chef
+FROM docker.io/archlinux/archlinux:base-devel AS chef
+RUN pacman -Syu --noconfirm --needed rust cargo clang &&\
+	cargo install --locked cargo-chef
 WORKDIR /app
 
 FROM chef AS planner
@@ -14,7 +16,6 @@ RUN cargo build --release --bin build-package
 FROM archlinux/archlinux:base-devel
 
 COPY build-package/entrypoint.sh /
-COPY build-package/custom-paru /opt/paru
 
 RUN pacman -Syu --noconfirm --needed sudo git namcap &&\
 	useradd builder -m &&\
