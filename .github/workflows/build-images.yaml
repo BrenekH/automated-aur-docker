@@ -18,10 +18,11 @@ jobs:
       matrix:
         subfolder:
           - "build-package"
+          - "test-package"
+          - "publish-package"
+          - "update-package-via-manifest"
 
     steps:
-      - uses: actions/checkout@v7
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
@@ -38,6 +39,6 @@ jobs:
       - name: Build and push container images/tags
         uses: docker/build-push-action@v7
         with:
-          context: ./${{ matrix.subfolder }}
+          file: ./${{ matrix.subfolder }}/Dockerfile
           push: true
           tags: ghcr.io/brenekh/auto-aur-${{ matrix.subfolder }}:latest

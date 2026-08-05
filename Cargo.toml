@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["common", "publish-package", "test-package", "update-package-via-manifest"]
+members = ["build-package", "common", "publish-package", "test-package", "update-package-via-manifest"]
 
 [workspace.dependencies]
 anyhow = "1.0.104"
