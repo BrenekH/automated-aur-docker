@@ -9,13 +9,18 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
 
-# TODO: Figure out how to install libalpm headers required for Paru bindgen
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v7
+
+    - name: Setup Arch Linux environment
+      uses: rangho-actions/setup-arch@v1.2.2
+      with:
+        packages: "rust cargo clang"
+
     - uses: Swatinem/rust-cache@v2
       with:
         # Allow cache to be shared between jobs
@@ -24,12 +29,19 @@ jobs:
 
     - name: Build All Binary Crates
       run: cargo build --verbose
+      shell: arch.sh {0}
 
   test:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v7
+
+    - name: Setup Arch Linux environment
+      uses: rangho-actions/setup-arch@v1.2.2
+      with:
+        packages: "rust cargo clang"
+
     - uses: Swatinem/rust-cache@v2
       with:
         # Allow cache to be shared between jobs
@@ -44,6 +56,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
+
+    - name: Setup Arch Linux environment
+      uses: rangho-actions/setup-arch@v1.2.2
+      with:
+        packages: "rust cargo clang"
+
     - uses: Swatinem/rust-cache@v2
       with:
         # Allow cache to be shared between jobs
