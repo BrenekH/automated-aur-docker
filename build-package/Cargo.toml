@@ -8,7 +8,3 @@ anyhow.workspace = true
 common = { path = "../common" }
 paru.workspace = true
 tokio.workspace = true
-
-[features]
-# Allows CI and building to use the embedded libalpm bindings, but generate fresh ones when building for the final image.
-bindgen_generate = ["paru/generate"]
