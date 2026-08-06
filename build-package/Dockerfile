@@ -9,9 +9,9 @@ RUN cargo chef prepare --bin build-package
 
 FROM chef AS builder
 COPY --from=planner /app/recipe.json .
-RUN cargo chef cook --release --bin build-package
+RUN cargo chef cook --release --bin build-package --features build-package/bindgen_generate
 COPY . .
-RUN cargo build --release --bin build-package
+RUN cargo build --release --bin build-package --features build-package/bindgen_generate
 
 FROM archlinux/archlinux:base-devel
 
@@ -22,7 +22,7 @@ RUN pacman -Syu --noconfirm --needed sudo git namcap &&\
 	passwd -d builder &&\
 	printf 'builder ALL=(ALL) ALL\n' | tee -a /etc/sudoers &&\
 	mkdir /buildout && chown -R builder:builder /buildout &&\
-	chmod +x /entrypoint.sh /opt/paru &&\
+	chmod +x /entrypoint.sh &&\
 	echo "MAKEFLAGS=\"-j\$(nproc)\"" >> /etc/makepkg.conf
 
 COPY --from=builder /app/target/release/build-package /build-package
