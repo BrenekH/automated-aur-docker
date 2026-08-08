@@ -1,7 +1,12 @@
 use std::{fs, path::Path};
 
+use anyhow::anyhow;
+use glob::glob;
+use tracing::{debug, error, info};
+
 use common::Manifest;
-use tracing::{debug, info};
+
+use crate::commands::{makepkg, namcap};
 
 mod commands;
 
@@ -41,13 +46,31 @@ fn build_pkg(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
         install_aur_deps(&aur_deps.iter().map(String::as_ref).collect::<Vec<&str>>())?;
     }
 
-    // TODO: Build package with makepkg (can we not do compression this time)
+    // Build package with makepkg with no compression this time
+    let _makepkg_output = makepkg(temp_path)?;
 
-    // TODO: Run namcap against the PKGBUILD
+    // Run namcap against the PKGBUILD
+    let _namcap_pkgbuild_output = namcap(temp_path.join("PKGBUILD"))?;
 
-    // TODO: Run namcap against all resulting packages
+    // TODO: If makepkg returned an error, skip the remaining checks and return
 
-    // TODO: Copy all resulting packages to $GITHUB_WORKSPACE
+    for entry in glob(
+        temp_path
+            .join("*.pkg.tar")
+            .to_str()
+            .ok_or(anyhow!("couldn't join glob pattern to temporary directory"))?,
+    )
+    .expect("Failed to read glob pattern")
+    {
+        match entry {
+            Ok(_path) => {
+                // TODO: Run namcap against all resulting packages
+
+                // TODO: Copy all resulting packages to $GITHUB_WORKSPACE
+            }
+            Err(e) => error!(error=%e, "glob entry produced error"),
+        }
+    }
 
     // TODO: Create results text
 

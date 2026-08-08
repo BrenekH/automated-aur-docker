@@ -5,10 +5,10 @@ use std::{
 
 use anyhow::anyhow;
 
-#[expect(unused)]
 pub fn makepkg(dir_path: impl AsRef<Path>) -> anyhow::Result<String> {
     let cmd = Command::new("makepkg")
         .args(["--syncdeps", "--nocolor", "--noconfirm", "--noprogressbar"])
+        .env("PKGEXT", ".pkg.tar")
         .current_dir(dir_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
@@ -26,7 +26,6 @@ pub fn makepkg(dir_path: impl AsRef<Path>) -> anyhow::Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
 
-#[expect(unused)]
 pub fn namcap(file_path: impl AsRef<Path>) -> anyhow::Result<String> {
     let cmd = Command::new("namcap")
         .arg("--info")
