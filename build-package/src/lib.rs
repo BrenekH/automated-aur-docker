@@ -3,6 +3,8 @@ use std::{fs, path::Path};
 use common::Manifest;
 use tracing::{debug, info};
 
+mod commands;
+
 pub fn build_package(package_dir: impl AsRef<Path>) {
     build_pkg(package_dir).unwrap(); // TODO: Handle errors
 }
