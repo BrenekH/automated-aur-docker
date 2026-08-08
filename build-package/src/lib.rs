@@ -1,4 +1,8 @@
-use std::{fs, path::Path};
+use std::{
+    collections::HashMap,
+    env, fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::anyhow;
 use glob::glob;
@@ -6,7 +10,7 @@ use tracing::{debug, error, info};
 
 use common::Manifest;
 
-use crate::commands::{makepkg, namcap};
+use crate::commands::{makepkg, namcap, sudo_copy_file};
 
 mod commands;
 
@@ -54,6 +58,8 @@ fn build_pkg(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
 
     // TODO: If makepkg returned an error, skip the remaining checks and return
 
+    let mut package_file_map: HashMap<PathBuf, String> = HashMap::new();
+
     for entry in glob(
         temp_path
             .join("*.pkg.tar")
@@ -63,10 +69,26 @@ fn build_pkg(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
     .expect("Failed to read glob pattern")
     {
         match entry {
-            Ok(_path) => {
-                // TODO: Run namcap against all resulting packages
+            Ok(built_pkg_path) => {
+                // TODO: Instead of failing the whole job, perhaps an error message could be output to the Actions log and the comment text
 
-                // TODO: Copy all resulting packages to $GITHUB_WORKSPACE
+                let package_file_name = built_pkg_path.file_name().ok_or(anyhow!(
+                    "Couldn't get file name of built package path: {built_pkg_path:?}"
+                ))?;
+
+                info!("Running namcap against {}", built_pkg_path.display());
+                let namcap_output = namcap(&built_pkg_path)?;
+
+                info!(
+                    "Copying built package ({}) to GITHUB_WORKSPACE",
+                    package_file_name.display(),
+                );
+                sudo_copy_file(
+                    &built_pkg_path,
+                    PathBuf::from(env::var("GITHUB_WORKSPACE")?).join(package_file_name),
+                )?;
+
+                package_file_map.insert(built_pkg_path, namcap_output);
             }
             Err(e) => error!(error=%e, "glob entry produced error"),
         }
