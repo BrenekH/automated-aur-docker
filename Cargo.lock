@@ -240,7 +240,10 @@ dependencies = [
  "anyhow",
  "common",
  "paru",
+ "serde_json",
+ "tempfile",
  "tokio",
+ "tracing",
 ]
 
 [[package]]

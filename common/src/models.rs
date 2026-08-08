@@ -8,6 +8,8 @@ pub struct Manifest {
     pub include: Vec<String>,
     #[serde(rename = "automaticUpdates")]
     pub automatic_updates: Option<ManifestAutoUpdate>,
+    #[serde(rename = "aurDeps")]
+    pub aur_dependencies: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -58,7 +60,8 @@ mod tests {
                 name: "auto-editor".into(),
                 test_cmd: Some("auto-editor --version".into()),
                 include: vec![],
-                automatic_updates: None
+                automatic_updates: None,
+                aur_dependencies: Some(vec![]),
             }
         );
     }
@@ -84,6 +87,7 @@ mod tests {
                 automatic_updates: Some(ManifestAutoUpdate::GithubReleases(GHReleasesData {
                     repo: "WyattBlue/auto-editor".into()
                 })),
+                aur_dependencies: None,
             }
         );
     }
@@ -108,6 +112,7 @@ mod tests {
                 automatic_updates: Some(ManifestAutoUpdate::GithubTags(GHTagsData {
                     repo: "WyattBlue/auto-editor".into()
                 })),
+                aur_dependencies: None,
             }
         );
     }
@@ -134,6 +139,7 @@ mod tests {
                     app_id: "app_c3U4eZcDbjV".into(),
                     app_slug: "ngrok/ngrok-v3".into()
                 })),
+                aur_dependencies: None,
             }
         );
     }
