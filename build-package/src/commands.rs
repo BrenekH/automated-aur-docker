@@ -1,11 +1,12 @@
 use std::{
     path::Path,
-    process::{Command, Stdio},
+    process::{Command, Output, Stdio},
 };
 
 use anyhow::anyhow;
+use tracing::warn;
 
-pub fn makepkg(dir_path: impl AsRef<Path>) -> anyhow::Result<String> {
+pub fn makepkg(dir_path: impl AsRef<Path>) -> anyhow::Result<Output> {
     let cmd = Command::new("makepkg")
         .args(["--syncdeps", "--nocolor", "--noconfirm", "--noprogressbar"])
         .env("PKGEXT", ".pkg.tar")
@@ -17,16 +18,16 @@ pub fn makepkg(dir_path: impl AsRef<Path>) -> anyhow::Result<String> {
     let output = cmd.wait_with_output()?;
 
     if output.status.success() {
-        return Err(anyhow!(
+        warn!(
             "error occurred while running makepkg --syncdeps --nocolor --noconfirm --noprogressbar: exit code {:?}",
             output.status.code()
-        ));
+        );
     }
 
-    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    Ok(output)
 }
 
-pub fn namcap(file_path: impl AsRef<Path>) -> anyhow::Result<String> {
+pub fn namcap(file_path: impl AsRef<Path>) -> anyhow::Result<Output> {
     let cmd = Command::new("namcap")
         .arg("--info")
         .arg(file_path.as_ref())
@@ -37,17 +38,16 @@ pub fn namcap(file_path: impl AsRef<Path>) -> anyhow::Result<String> {
     let output = cmd.wait_with_output()?;
 
     if output.status.success() {
-        return Err(anyhow!(
+        warn!(
             "error occurred while running namcap --info \"{}\": exit code {:?}",
             file_path.as_ref().to_string_lossy(),
             output.status.code(),
-        ));
+        );
     }
 
-    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    Ok(output)
 }
 
-#[expect(unused)]
 pub fn sudo_copy_file(
     source_file: impl AsRef<Path>,
     target_file: impl AsRef<Path>,

@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     env, fs,
     path::{Path, PathBuf},
+    process::Output,
 };
 
 use anyhow::anyhow;
@@ -14,11 +15,23 @@ use crate::commands::{makepkg, namcap, sudo_copy_file};
 
 mod commands;
 
-pub fn build_package(package_dir: impl AsRef<Path>) {
-    build_pkg(package_dir).unwrap(); // TODO: Handle errors
+pub enum BuildStatus {
+    Failure,
+    Success,
 }
 
-fn build_pkg(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
+/// Returns the results text that should be presented and whether or not the operations
+/// were a success.
+pub fn build_package(package_dir: impl AsRef<Path>) -> (String, BuildStatus) {
+    build_pkg(package_dir).unwrap() // TODO: Handle errors
+}
+
+/// Returns the results text that should be presented and whether or not the operations
+/// were a success.
+///
+/// Unrecoverable/unskippable errors are surfaced using [`anyhow::Error`].
+fn build_pkg(package_dir: impl AsRef<Path>) -> anyhow::Result<(String, BuildStatus)> {
+    // String for results text and bool for failure status
     // Read and parse manifest
     let manifest_path = package_dir.as_ref().join(".aurmanifest.json");
     debug!(?manifest_path);
@@ -51,14 +64,12 @@ fn build_pkg(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
     }
 
     // Build package with makepkg with no compression this time
-    let _makepkg_output = makepkg(temp_path)?;
+    let makepkg_output = makepkg(temp_path)?;
 
     // Run namcap against the PKGBUILD
-    let _namcap_pkgbuild_output = namcap(temp_path.join("PKGBUILD"))?;
+    let namcap_pkgbuild_output = namcap(temp_path.join("PKGBUILD"))?;
 
-    // TODO: If makepkg returned an error, skip the remaining checks and return
-
-    let mut package_file_map: HashMap<PathBuf, String> = HashMap::new();
+    let mut package_file_map: HashMap<PathBuf, Output> = HashMap::new();
 
     for entry in glob(
         temp_path
@@ -94,11 +105,65 @@ fn build_pkg(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
         }
     }
 
-    // TODO: Create results text
+    let mut result_text = String::with_capacity(
+        (makepkg_output.stdout.len()
+            + makepkg_output.stderr.len()
+            + namcap_pkgbuild_output.stdout.len()
+            + namcap_pkgbuild_output.stderr.len())
+            * 2,
+    );
+    let mut build_status = BuildStatus::Success;
 
-    // TODO: Return results text and whether or not to fail the step
+    // Only use makepkg output if it encountered an error
+    if !makepkg_output.status.success() {
+        build_status = BuildStatus::Failure;
+        result_text.push_str(&gen_results_section("makepkg", &makepkg_output));
+    }
 
-    Ok(())
+    // PKGBUILD namcap
+    result_text.push_str(&gen_results_section(
+        "namcap PKGBUILD",
+        &namcap_pkgbuild_output,
+    ));
+
+    // All .pkg.tar file namcaps
+    for (path, output) in package_file_map {
+        if !output.status.success() {
+            build_status = BuildStatus::Failure;
+        }
+
+        result_text.push_str(&gen_results_section(
+            &format!(
+                "namcap {}",
+                path.file_name()
+                    .expect("How does this file not have a file name after we checked it")
+                    .display()
+            ),
+            &output,
+        ));
+    }
+
+    Ok((result_text, build_status))
+}
+
+fn gen_results_section(title: &str, output: &Output) -> String {
+    let (stdout, stderr) = (
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
+    );
+
+    let mut pair_str = String::with_capacity(stdout.len() + stderr.len() + 1);
+
+    for pair in [("Standard Output", stdout), ("Standard Error", stderr)] {
+        pair_str.push_str(&format!("### {}:\n```\n{}\n```\n", pair.0, pair.1));
+    }
+
+    let exit_code_str = match output.status.code() {
+        None | Some(0) => "",
+        Some(code) => &format!(" (exit code: {code})"),
+    };
+
+    format!("## {title}{exit_code_str}:\n{pair_str}")
 }
 
 fn install_aur_deps(deps: &[&str]) -> anyhow::Result<()> {
