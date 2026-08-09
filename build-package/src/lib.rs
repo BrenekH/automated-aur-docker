@@ -15,6 +15,9 @@ use crate::commands::{makepkg, namcap, sudo_copy_file};
 
 mod commands;
 
+const RESULTS_HEADER: &str =
+    "# Build Results\n\nIf the PR looks good to merge, apply the `lgtm` label to the PR.\n\n";
+
 pub enum BuildStatus {
     Failure,
     Success,
@@ -106,12 +109,14 @@ fn build_pkg(package_dir: impl AsRef<Path>) -> anyhow::Result<(String, BuildStat
     }
 
     let mut result_text = String::with_capacity(
-        (makepkg_output.stdout.len()
-            + makepkg_output.stderr.len()
-            + namcap_pkgbuild_output.stdout.len()
-            + namcap_pkgbuild_output.stderr.len())
-            * 2,
+        RESULTS_HEADER.len()
+            + (makepkg_output.stdout.len()
+                + makepkg_output.stderr.len()
+                + namcap_pkgbuild_output.stdout.len()
+                + namcap_pkgbuild_output.stderr.len())
+                * 2,
     );
+    result_text.push_str(RESULTS_HEADER);
     let mut build_status = BuildStatus::Success;
 
     // Only use makepkg output if it encountered an error
