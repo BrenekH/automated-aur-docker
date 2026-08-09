@@ -1,0 +1,16 @@
+[package]
+name = "build-package"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow.workspace = true
+common = { path = "../common" }
+gha_main.workspace = true
+glob.workspace = true
+paru.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

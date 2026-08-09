@@ -15,6 +15,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
+
+    - name: Setup Arch Linux environment
+      uses: rangho-actions/setup-arch@v1.2.2
+      with:
+        packages: "rust cargo clang"
+
     - uses: Swatinem/rust-cache@v2
       with:
         # Allow cache to be shared between jobs
@@ -23,12 +29,19 @@ jobs:
 
     - name: Build All Binary Crates
       run: cargo build --verbose
+      shell: arch.sh {0}
 
   test:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v7
+
+    - name: Setup Arch Linux environment
+      uses: rangho-actions/setup-arch@v1.2.2
+      with:
+        packages: "rust cargo clang"
+
     - uses: Swatinem/rust-cache@v2
       with:
         # Allow cache to be shared between jobs
@@ -37,12 +50,19 @@ jobs:
 
     - name: Test All Workspace Crates
       run: cargo test --verbose
+      shell: arch.sh {0}
 
   clippy:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v7
+
+    - name: Setup Arch Linux environment
+      uses: rangho-actions/setup-arch@v1.2.2
+      with:
+        packages: "rust cargo clang"
+
     - uses: Swatinem/rust-cache@v2
       with:
         # Allow cache to be shared between jobs
@@ -51,3 +71,4 @@ jobs:
 
     - name: Lint All Workspace Crates
       run: cargo clippy
+      shell: arch.sh {0}
