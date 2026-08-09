@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
-    env, fs,
+    env,
+    fmt::Display,
+    fs,
     path::{Path, PathBuf},
-    process::Output,
+    process::{Output, exit},
 };
 
 use anyhow::anyhow;
@@ -18,15 +20,46 @@ mod commands;
 const RESULTS_HEADER: &str =
     "# Build Results\n\nIf the PR looks good to merge, apply the `lgtm` label to the PR.\n\n";
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BuildStatus {
-    Failure,
     Success,
+    Failure,
+}
+
+impl BuildStatus {
+    /// Returns a [`bool`] indicating whether or not the status
+    /// is a failure.
+    pub fn failed(&self) -> bool {
+        match self {
+            BuildStatus::Success => false,
+            BuildStatus::Failure => true,
+        }
+    }
+}
+
+impl Display for BuildStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                BuildStatus::Success => "success",
+                BuildStatus::Failure => "failure",
+            }
+        )
+    }
 }
 
 /// Returns the results text that should be presented and whether or not the operations
 /// were a success.
 pub fn build_package(package_dir: impl AsRef<Path>) -> (String, BuildStatus) {
-    build_pkg(package_dir).unwrap() // TODO: Handle errors
+    match build_pkg(package_dir) {
+        Ok(t) => t,
+        Err(e) => {
+            error!(error=%e, "Encountered unrecoverable error");
+            exit(2);
+        }
+    }
 }
 
 /// Returns the results text that should be presented and whether or not the operations

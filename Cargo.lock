@@ -239,12 +239,14 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "common",
+ "gha_main",
  "glob",
  "paru",
  "serde_json",
  "tempfile",
  "tokio",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
