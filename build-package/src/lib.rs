@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     env,
-    fmt::Display,
+    fmt::{Display, Write},
     fs,
     path::{Path, PathBuf},
     process::{Output, exit},
@@ -201,7 +201,7 @@ fn gen_results_section(title: &str, output: &Output) -> String {
     let mut pair_str = String::with_capacity(stdout.len() + stderr.len() + 1);
 
     for pair in [("Standard Output", stdout), ("Standard Error", stderr)] {
-        pair_str.push_str(&format!("### {}:\n```\n{}\n```\n", pair.0, pair.1));
+        let _ = write!(pair_str, "### {}:\n```\n{}\n```\n", pair.0, pair.1);
     }
 
     let exit_code_str = match output.status.code() {

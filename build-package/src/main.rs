@@ -7,6 +7,10 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use build_package::{BuildStatus, build_package};
 use common::gha_subscriber::GHALayer;
 
+#[expect(
+    clippy::unnecessary_wraps,
+    reason = "gha_main requires main() to return a Result, but we're handling the error stuff ourselves and only returning Ok(())"
+)]
 #[gha_main::gha_main]
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()

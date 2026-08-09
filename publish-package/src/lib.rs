@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path, process::exit};
+use std::{env, fs, path::Path, process::exit, string::ToString};
 
 use anyhow::anyhow;
 use regex::{RegexSet, regex};
@@ -16,7 +16,7 @@ mod commands;
 
 pub fn publish(package_dir: impl AsRef<Path>) {
     match publish_result(package_dir) {
-        Ok(_) => {}
+        Ok(()) => {}
         Err(e) => {
             error!("{e}");
             exit(1);
@@ -73,7 +73,7 @@ fn publish_result(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
     git_add_files(
         ["PKGBUILD", ".SRCINFO", ".gitignore"]
             .iter()
-            .map(|f| f.to_string())
+            .map(ToString::to_string)
             .chain(manifest.include),
         repo_path,
     )?;
@@ -82,7 +82,7 @@ fn publish_result(package_dir: impl AsRef<Path>) -> anyhow::Result<()> {
     git_commit(
         generate_commit_message(repo_path)?
             .iter()
-            .map(|m| m.to_string()),
+            .map(ToString::to_string),
         repo_path,
     )?;
 

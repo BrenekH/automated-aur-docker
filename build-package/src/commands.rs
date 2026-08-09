@@ -55,12 +55,12 @@ pub fn sudo_copy_file(
     let command_string = format!(
         "sudo cp {} {}",
         source_file.as_ref().to_str().ok_or(anyhow!(
-            "could not convert source file {:?} to str",
-            source_file.as_ref(),
+            "could not convert source file {} to str",
+            source_file.as_ref().display(),
         ))?,
         target_file.as_ref().to_str().ok_or(anyhow!(
-            "could not convert target file {:?} to str",
-            target_file.as_ref(),
+            "could not convert target file {} to str",
+            target_file.as_ref().display(),
         ))?,
     );
 
