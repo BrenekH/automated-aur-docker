@@ -22,7 +22,7 @@ RUN pacman -Syu --noconfirm --needed sudo git namcap &&\
 	passwd -d builder &&\
 	printf 'builder ALL=(ALL) ALL\n' | tee -a /etc/sudoers &&\
 	mkdir /buildout && chown -R builder:builder /buildout &&\
-	chmod +x /entrypoint.sh /opt/paru &&\
+	chmod +x /entrypoint.sh &&\
 	echo "MAKEFLAGS=\"-j\$(nproc)\"" >> /etc/makepkg.conf
 
 COPY --from=builder /app/target/release/build-package /build-package
