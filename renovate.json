@@ -7,7 +7,7 @@
   "schedule": ["* * * * 1"], // Only run on Mondays by default
   "minimumReleaseAge": "7 days",
   "automergeType": "branch",
-  "packageRules": {
+  "packageRules": [
     // General automatic updates
     {
       "matchUpdateTypes": ["patch", "pin", "digest"],
@@ -25,5 +25,5 @@
       "automergeType": "pr",
       "automerge": true
     }
-  }
+  ]
 }
