@@ -13,7 +13,7 @@ pub fn clone_aur_repo(repo_name: &str, target_directory: impl AsRef<Path>) -> an
         .arg(target_directory.as_ref())
         .status()?;
 
-    if status.success() {
+    if !status.success() {
         return Err(anyhow!(
             "error occurred while cloning repo: exit code {:?}",
             status.code()
@@ -33,7 +33,7 @@ pub fn set_local_git_config(
         .current_dir(git_dir)
         .status()?;
 
-    if status.success() {
+    if !status.success() {
         return Err(anyhow!(
             "error occurred while setting git config key: exit code {:?}",
             status.code()
@@ -49,7 +49,7 @@ pub fn generate_srcinfo(target_directory: impl AsRef<Path>) -> anyhow::Result<()
         .current_dir(target_directory)
         .status()?;
 
-    if status.success() {
+    if !status.success() {
         return Err(anyhow!(
             "error occurred while running makepkg --printsrcinfo > .SRCINFO: exit code {:?}",
             status.code()
@@ -70,7 +70,7 @@ where
         .current_dir(git_dir)
         .status()?;
 
-    if status.success() {
+    if !status.success() {
         return Err(anyhow!(
             "error occurred while running makepkg --printsrcinfo > .SRCINFO: exit code {:?}",
             status.code()
@@ -92,7 +92,7 @@ where
         .args(intersperse_with(message_args, || S::from("-m")))
         .status()?;
 
-    if status.success() {
+    if !status.success() {
         return Err(anyhow!(
             "error occurred while running git commit: exit code {:?}",
             status.code()
@@ -108,7 +108,7 @@ pub fn git_push(git_dir: impl AsRef<Path>) -> anyhow::Result<()> {
         .current_dir(git_dir)
         .status()?;
 
-    if status.success() {
+    if !status.success() {
         return Err(anyhow!(
             "error occurred while running git push: exit code {:?}",
             status.code()
@@ -128,7 +128,7 @@ pub fn git_modified_files(git_dir: impl AsRef<Path>) -> anyhow::Result<String> {
 
     let output = cmd.wait_with_output()?;
 
-    if output.status.success() {
+    if !output.status.success() {
         return Err(anyhow!(
             "error occurred while running git commit --short: exit code {:?}",
             output.status.code()
@@ -148,7 +148,7 @@ pub fn pkgbuild_diff(git_dir: impl AsRef<Path>) -> anyhow::Result<String> {
 
     let output = cmd.wait_with_output()?;
 
-    if output.status.success() {
+    if !output.status.success() {
         return Err(anyhow!(
             "error occurred while running git diff HEAD~1 PKGBUILD: exit code {:?}",
             output.status.code()
