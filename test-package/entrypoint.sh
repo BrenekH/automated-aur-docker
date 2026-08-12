@@ -7,7 +7,7 @@ pacman -Syu
 # that if the shared package cache contains packages that depend on each other, Pacman will
 # still install the packages in the cache, and the package dependencies (using the second)
 # install command.
-pacman -Udd --noconfirm $GITHUB_WORKSPACE/*.pkg.tar.zst
-pacman -U --noconfirm $GITHUB_WORKSPACE/*.pkg.tar.zst
+pacman -Udd --noconfirm $GITHUB_WORKSPACE/*.pkg.tar*
+pacman -U --noconfirm $GITHUB_WORKSPACE/*.pkg.tar*
 
 /test-package "$@"
