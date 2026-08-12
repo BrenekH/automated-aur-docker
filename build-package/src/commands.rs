@@ -17,7 +17,7 @@ pub fn makepkg(dir_path: impl AsRef<Path>) -> anyhow::Result<Output> {
 
     let output = cmd.wait_with_output()?;
 
-    if output.status.success() {
+    if !output.status.success() {
         warn!(
             "error occurred while running makepkg --syncdeps --nocolor --noconfirm --noprogressbar: exit code {:?}",
             output.status.code()
@@ -37,7 +37,7 @@ pub fn namcap(file_path: impl AsRef<Path>) -> anyhow::Result<Output> {
 
     let output = cmd.wait_with_output()?;
 
-    if output.status.success() {
+    if !output.status.success() {
         warn!(
             "error occurred while running namcap --info \"{}\": exit code {:?}",
             file_path.as_ref().to_string_lossy(),
@@ -68,7 +68,7 @@ pub fn sudo_copy_file(
         .args(["-c", &command_string])
         .status()?;
 
-    if status.success() {
+    if !status.success() {
         return Err(anyhow!(
             "error occurred while running {}: exit code {:?}",
             command_string,
