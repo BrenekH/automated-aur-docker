@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-pacman -Syu
+pacman -Syu --noconfirm
 
 # List out copied packages
 printf '%s\n' $GITHUB_WORKSPACE/*.pkg.tar*
