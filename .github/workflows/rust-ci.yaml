@@ -25,7 +25,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # 26.04 (aka latest) uses sudo-rs which doesn't work with the setup-arch action
 
     steps:
     - uses: actions/checkout@v7
@@ -46,7 +46,7 @@ jobs:
       shell: arch.sh {0}
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # 26.04 (aka latest) uses sudo-rs which doesn't work with the setup-arch action
 
     steps:
     - uses: actions/checkout@v7
@@ -67,7 +67,7 @@ jobs:
       shell: arch.sh {0}
 
   clippy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # 26.04 (aka latest) uses sudo-rs which doesn't work with the setup-arch action
 
     steps:
     - uses: actions/checkout@v7
